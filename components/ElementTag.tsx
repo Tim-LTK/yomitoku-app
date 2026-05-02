@@ -1,21 +1,19 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { formatGrammarRoleLabel } from "@/lib/breakdown/formatRole";
 import type { BreakdownElement } from "@/lib/types/breakdown";
 
 type ElementTagProps = {
   element: BreakdownElement;
+  /** When set, renders as a compact tappable pill for Explain / UX flows. */
+  onPress?: () => void;
 };
 
-export function ElementTag({ element }: ElementTagProps) {
+export function ElementTag({ element, onPress }: ElementTagProps) {
   const roleLabel = formatGrammarRoleLabel(element.role);
 
-  return (
-    <View
-      accessibilityRole="text"
-      accessibilityLabel={`${element.text}, reading ${element.reading}, role ${roleLabel}`}
-      className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5"
-    >
+  const body = (
+    <>
       <View className="flex-row flex-wrap items-end gap-x-2">
         <Text className="text-lg font-semibold text-neutral-900">{element.text}</Text>
         <Text className="text-sm text-neutral-500">{element.reading}</Text>
@@ -33,6 +31,29 @@ export function ElementTag({ element }: ElementTagProps) {
       {element.note && element.note.trim().length > 0 ? (
         <Text className="mt-1.5 text-xs italic leading-snug text-neutral-600">{element.note}</Text>
       ) : null}
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open explanation for ${element.text}, reading ${element.reading}, role ${roleLabel}`}
+        onPress={onPress}
+        className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 active:opacity-80"
+      >
+        {body}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View
+      accessibilityRole="text"
+      accessibilityLabel={`${element.text}, reading ${element.reading}, role ${roleLabel}`}
+      className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5"
+    >
+      {body}
     </View>
   );
 }

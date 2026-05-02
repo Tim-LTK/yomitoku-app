@@ -13,3 +13,7 @@ export const PRACTICE_GENERATE_PATH = "/practice/generate" as const;
 /** Phase 2: score one learner submission. */
 
 export const PRACTICE_EVALUATE_PATH = "/practice/evaluate" as const;
+
+/** Phase 1.5 — targeted tutor explanation for one `BreakdownElement`. */
+
+export const EXPLAIN_PATH = "/explain" as const;

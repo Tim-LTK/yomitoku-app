@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 
 import {
   ANALYSE_PATH,
+  EXPLAIN_PATH,
   EXTRACT_PATH,
   PRACTICE_EVALUATE_PATH,
   PRACTICE_GENERATE_PATH,
@@ -9,10 +10,12 @@ import {
 import { AnalyseClientError } from "@/lib/api/errors";
 import {
   type AnalyseResponse,
+  type BreakdownElement,
   type SentenceBreakdown,
   safeParseAnalyseResponse,
 } from "@/lib/types/breakdown";
 import { safeParseExtractResponse } from "@/lib/types/extract";
+import { safeParseExplainResponse, type ElementExplanation } from "@/lib/types/gaps";
 import {
   safeParsePracticeEvaluatePayload,
   safeParsePracticeGeneratePayload,
@@ -57,6 +60,10 @@ function buildPracticeGenerateUrl(baseUrl: string): string {
 
 function buildPracticeEvaluateUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${PRACTICE_EVALUATE_PATH}`;
+}
+
+function buildExplainUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${EXPLAIN_PATH}`;
 }
 
 function guardApiBase(): string {
@@ -307,4 +314,36 @@ export async function postPracticeEvaluate(payload: {
   }
 
   return parsed.data.result;
+}
+
+/**
+ * POST /explain — targeted element tutoring (Phase 1.5), separate from sentence breakdown generation.
+ */
+export async function postExplain(payload: {
+  breakdownElement: BreakdownElement;
+  sourceSentence: string;
+}): Promise<ElementExplanation> {
+  const base = guardApiBase();
+  const url = buildExplainUrl(base);
+  const body = {
+    breakdownElement: payload.breakdownElement,
+    sourceSentence: payload.sourceSentence.trim(),
+  };
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseExplainResponse(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected explain shape. The server may need a fix.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data.explanation;
 }
