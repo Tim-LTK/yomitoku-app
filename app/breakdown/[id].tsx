@@ -1,10 +1,11 @@
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { SentenceBreakdownView } from "@/components/SentenceBreakdownView";
 import { getAnalyseResult } from "@/lib/breakdown/routePayload";
 
 export default function BreakdownDetailScreen() {
+  const router = useRouter();
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const payload = id ? getAnalyseResult(id) : undefined;
@@ -47,6 +48,17 @@ export default function BreakdownDetailScreen() {
               <SentenceBreakdownView key={`sentence-${index}`} breakdown={breakdown} index={index} />
             ))
           : null}
+
+        {payload && id ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="Opens Phase 2 practice for this breakdown"
+            onPress={() => router.push(`/practice/${id}`)}
+            className="mt-8 w-full items-center justify-center rounded-xl bg-indigo-600 py-4 active:opacity-90"
+          >
+            <Text className="text-base font-semibold text-white">Practice this</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
   );

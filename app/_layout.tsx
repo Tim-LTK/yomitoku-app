@@ -45,6 +45,14 @@ export default function RootLayout() {
               headerBackTitle: "Back",
             }}
           />
+          <Stack.Screen
+            name="practice/[id]"
+            options={{
+              headerShown: true,
+              title: "Practice",
+              headerBackTitle: "Back",
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GluestackUIProvider>

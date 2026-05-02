@@ -1,12 +1,24 @@
 import Constants from "expo-constants";
 
-import { ANALYSE_PATH, EXTRACT_PATH } from "@/lib/api/constants";
+import {
+  ANALYSE_PATH,
+  EXTRACT_PATH,
+  PRACTICE_EVALUATE_PATH,
+  PRACTICE_GENERATE_PATH,
+} from "@/lib/api/constants";
 import { AnalyseClientError } from "@/lib/api/errors";
 import {
   type AnalyseResponse,
+  type SentenceBreakdown,
   safeParseAnalyseResponse,
 } from "@/lib/types/breakdown";
 import { safeParseExtractResponse } from "@/lib/types/extract";
+import {
+  safeParsePracticeEvaluatePayload,
+  safeParsePracticeGeneratePayload,
+  type PracticeItem,
+  type PracticeResult,
+} from "@/lib/types/practice";
 
 const ENV_KEYS = ["EXPO_PUBLIC_API_URL"] as const;
 
@@ -39,6 +51,25 @@ function buildExtractUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${EXTRACT_PATH}`;
 }
 
+function buildPracticeGenerateUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${PRACTICE_GENERATE_PATH}`;
+}
+
+function buildPracticeEvaluateUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${PRACTICE_EVALUATE_PATH}`;
+}
+
+function guardApiBase(): string {
+  const base = readExpoPublicApiUrl();
+  if (!base) {
+    throw new AnalyseClientError(
+      "Missing EXPO_PUBLIC_API_URL. Copy .env.example → .env and set your Railway FastAPI base URL.",
+      "configuration",
+    );
+  }
+  return base;
+}
+
 async function readJsonFromResponse(res: Response): Promise<unknown> {
   const raw = await res.text();
   if (!raw.trim()) {
@@ -53,6 +84,31 @@ async function readJsonFromResponse(res: Response): Promise<unknown> {
       { cause, statusCode: res.status },
     );
   }
+}
+
+async function postJson(
+  url: string,
+  body: unknown,
+): Promise<{ res: Response; json: unknown }> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (cause) {
+    throw new AnalyseClientError(
+      "Network request failed. Confirm the device can reach your API URL and that the server is running.",
+      "network",
+      { cause },
+    );
+  }
+  const json = await readJsonFromResponse(res);
+  return { res, json };
 }
 
 function stringifyHttpDetail(detail: unknown): string | null {
@@ -124,36 +180,10 @@ function messageFromHttpPayload(status: number, payload: unknown): string {
  * POST /analyse — server-side AI only; this wrapper never touches Anthropic keys.
  */
 export async function postAnalyse(payload: { text: string }): Promise<AnalyseResponse> {
-  const base = readExpoPublicApiUrl();
-  if (!base) {
-    throw new AnalyseClientError(
-      "Missing EXPO_PUBLIC_API_URL. Copy .env.example → .env and set your Railway FastAPI base URL.",
-      "configuration",
-    );
-  }
-
+  const base = guardApiBase();
   const url = buildAnalyseUrl(base);
   const body = { text: payload.text.trim() };
-
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (cause) {
-    throw new AnalyseClientError(
-      "Network request failed. Confirm the device can reach your API URL and that the server is running.",
-      "network",
-      { cause },
-    );
-  }
-
-  const json = await readJsonFromResponse(res);
+  const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
     const message = messageFromHttpPayload(res.status, json);
@@ -192,39 +222,13 @@ export async function postExtract(payload: {
   imageBase64: string;
   mimeType: string;
 }): Promise<string> {
-  const base = readExpoPublicApiUrl();
-  if (!base) {
-    throw new AnalyseClientError(
-      "Missing EXPO_PUBLIC_API_URL. Copy .env.example → .env and set your Railway FastAPI base URL.",
-      "configuration",
-    );
-  }
-
+  const base = guardApiBase();
   const url = buildExtractUrl(base);
   const body = {
     imageBase64: payload.imageBase64.trim(),
     mimeType: normalizeExtractMimeType(payload.mimeType),
   };
-
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (cause) {
-    throw new AnalyseClientError(
-      "Network request failed. Confirm the device can reach your API URL and that the server is running.",
-      "network",
-      { cause },
-    );
-  }
-
-  const json = await readJsonFromResponse(res);
+  const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
     const message = messageFromHttpPayload(res.status, json);
@@ -241,4 +245,66 @@ export async function postExtract(payload: {
   }
 
   return parsed.data.text;
+}
+
+/**
+ * POST /practice/generate — drills from one analysed sentence breakdown (Phase 2).
+ */
+export async function postPracticeGenerate(payload: {
+  sentenceBreakdown: SentenceBreakdown;
+}): Promise<PracticeItem[]> {
+  const base = guardApiBase();
+  const url = buildPracticeGenerateUrl(base);
+  const body = { sentenceBreakdown: payload.sentenceBreakdown };
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParsePracticeGeneratePayload(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected practice generate shape. The server may need a fix.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data.items;
+}
+
+/**
+ * POST /practice/evaluate — score one answer for a generated item (Phase 2).
+ */
+export async function postPracticeEvaluate(payload: {
+  sentenceBreakdown: SentenceBreakdown;
+  practiceItem: PracticeItem;
+  userAnswer: string;
+}): Promise<PracticeResult> {
+  const base = guardApiBase();
+  const url = buildPracticeEvaluateUrl(base);
+  const body = {
+    sentenceBreakdown: payload.sentenceBreakdown,
+    practiceItem: payload.practiceItem,
+    userAnswer: payload.userAnswer.trim(),
+  };
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParsePracticeEvaluatePayload(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected practice evaluate shape. The server may need a fix.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data.result;
 }
