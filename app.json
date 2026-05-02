@@ -7,24 +7,38 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "platforms": [
+      "ios"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yomitoku.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take a photo so Yomitoku can read and explain the Japanese text in it.",
+        "NSPhotoLibraryUsageDescription": "Choose an image so Yomitoku can read and explain the Japanese text in it."
+      }
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "scheme": "yomitoku",
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose an image so Yomitoku can read and explain the Japanese text in it."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Take a photo so Yomitoku can read and explain the Japanese text in it."
+        }
+      ]
+    ]
   }
 }
