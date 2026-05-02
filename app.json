@@ -20,7 +20,8 @@
       "bundleIdentifier": "com.yomitoku.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Take a photo so Yomitoku can read and explain the Japanese text in it.",
-        "NSPhotoLibraryUsageDescription": "Choose an image so Yomitoku can read and explain the Japanese text in it."
+        "NSPhotoLibraryUsageDescription": "Choose an image so Yomitoku can read and explain the Japanese text in it.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "scheme": "yomitoku",
@@ -39,6 +40,12 @@
           "cameraPermission": "Take a photo so Yomitoku can read and explain the Japanese text in it."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8e255653-ccd7-49f9-b21c-f9b62d5d2f8e"
+      }
+    }
   }
 }
