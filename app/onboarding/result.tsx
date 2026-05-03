@@ -7,6 +7,14 @@ import { useOnboardingDraft } from "@/lib/onboarding/context";
 import { saveProfile } from "@/lib/storage/profile";
 import type { StudentProfile } from "@/lib/types/profile";
 
+function formatLabel(str: string): string {
+  const s = str.trim().replace(/_/g, " ");
+  if (s.length === 0) {
+    return "";
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function itemList(lines: string[], empty: string) {
   const list = lines.filter((s) => s.trim().length > 0);
   if (list.length === 0) {
@@ -30,7 +38,7 @@ function buildStrengths(profile: StudentProfile): string[] {
   }
   if (profile.knownGrammar.length > 0) {
     const top = profile.knownGrammar.slice(0, 4);
-    out.push(...top.map((g) => `言語機能のひとつの目安 · ${g}`));
+    out.push(...top.map((g) => formatLabel(g)));
   }
   if (out.length === 0 && profile.notes.trim().length > 0) {
     const clip = profile.notes.length > 140 ? `${profile.notes.slice(0, 140)}…` : profile.notes;
@@ -44,7 +52,7 @@ function buildConcerns(profile: StudentProfile): string[] {
   if (profile.listeningGap) {
     out.push("リスニングの強化余地がフラグされています。");
   }
-  out.push(...profile.weakAreas.map((w) => `フォーカス候補 · ${w}`));
+  out.push(...profile.weakAreas.map((w) => formatLabel(w)));
   return out.slice(0, 8);
 }
 
