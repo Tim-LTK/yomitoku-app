@@ -230,19 +230,18 @@ export default function NigatePracticeScreen() {
     if (!currentSlot?.gap || !srsPreview) {
       return;
     }
+    const gapId = currentSlot.gap.id;
+    const payload = {
+      nextReviewAt: srsPreview.nextReviewAt,
+      intervalDays: srsPreview.suggestedIntervalDays,
+    };
+    await persistGapSchedule(gapId, payload);
     try {
-      await persistGapSchedule(currentSlot.gap.id, {
-        nextReviewAt: srsPreview.nextReviewAt,
-        intervalDays: srsPreview.suggestedIntervalDays,
-      });
-      await cloudUpdateGap(currentSlot.gap.id, {
-        nextReviewAt: srsPreview.nextReviewAt,
-        intervalDays: srsPreview.suggestedIntervalDays,
-      });
+      await cloudUpdateGap(gapId, payload);
     } catch {
-      /* Overlay persisted locally; PATCH may noop until backend stores SRS fields. */
+      /* Offline / HTTP — local overlay from persistGapSchedule still applies. */
     }
-    setFinalSrsByGapId((prev) => ({ ...prev, [currentSlot.gap.id]: srsPreview }));
+    setFinalSrsByGapId((prev) => ({ ...prev, [gapId]: srsPreview }));
     advanceAfterSrsHandled();
   }, [advanceAfterSrsHandled, currentSlot?.gap, srsPreview]);
 
