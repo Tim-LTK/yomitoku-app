@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -16,10 +17,11 @@ import {
   buildNativeLanguagesForApi,
   buildSelfReportedLevelLabel,
   useOnboardingDraft,
-} from "@/app/onboarding/context";
+} from "@/lib/onboarding/context";
 import { postOnboardAssess } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { getOpeningPlacementMessage, getPlacementQuestions } from "@/lib/onboarding/placementQuestions";
+import { showTranslation } from "@/lib/onboarding/showTranslation";
 import type { StudentProfile } from "@/lib/types/profile";
 
 type Bubble = {
@@ -31,6 +33,9 @@ type Bubble = {
 export default function OnboardingAssessmentScreen() {
   const insets = useSafeAreaInsets();
   const draft = useOnboardingDraft();
+
+  const levelSlugForTranslation = draft.level === "complete_beginner" ? "hajimete" : draft.level;
+  const showAssistantEn = showTranslation(levelSlugForTranslation);
 
   const nativeForApi = useMemo(
     () => buildNativeLanguagesForApi(draft.selectedNativeIds, draft.otherNativeDetail),
@@ -62,14 +67,14 @@ export default function OnboardingAssessmentScreen() {
     seededRef.current = true;
     const op = getOpeningPlacementMessage();
     setMessages([
-      { role: "assistant", jp: op.jp, en: op.en },
+      { role: "assistant", jp: op.jp, en: showAssistantEn ? op.en : undefined },
       {
         role: "assistant",
         jp: qs[0].jp,
-        en: qs[0].en,
+        en: showAssistantEn ? qs[0].en : undefined,
       },
     ]);
-  }, [draft.level, nativeForApi]);
+  }, [draft.level, nativeForApi, showAssistantEn]);
 
   const finalize = useCallback(
     async (five: string[]) => {
@@ -121,7 +126,7 @@ export default function OnboardingAssessmentScreen() {
         {
           role: "assistant",
           jp: q.jp,
-          en: q.en,
+          en: showAssistantEn ? q.en : undefined,
         },
       ]);
       setResponses(nextAnswers);
@@ -131,7 +136,7 @@ export default function OnboardingAssessmentScreen() {
     setMessages((prev) => [...prev, { role: "user", jp: trimmed }]);
     setResponses(nextAnswers);
     void finalize(nextAnswers);
-  }, [busy, finalize, input, questions, responses.length]);
+  }, [busy, finalize, input, questions, responses.length, showAssistantEn]);
 
   const missingDeps = draft.level === null || nativeForApi.length === 0 || !levelLabel;
 
@@ -142,7 +147,21 @@ export default function OnboardingAssessmentScreen() {
       className="flex-1 bg-neutral-50"
     >
       <View className="flex-1 bg-neutral-50" style={{ paddingTop: insets.top }}>
-        <View className="border-b border-neutral-200 px-6 py-4">
+        <View className="border-b border-neutral-200 px-6 pb-4 pt-2">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="戻る"
+            hitSlop={12}
+            disabled={busy}
+            onPress={() => router.back()}
+            className={`mb-3 flex-row items-center gap-1 self-start py-2 ${busy ? "opacity-40" : "active:opacity-80"}`}
+          >
+            <Ionicons name="chevron-back" size={22} color="#4f46e5" />
+            <View className="-ml-0.5">
+              <Text className="text-base font-semibold text-indigo-700">戻る</Text>
+              <Text className="mt-0.5 text-[11px] text-neutral-500">Back</Text>
+            </View>
+          </Pressable>
           <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">ステップ 3 / 4</Text>
           <Text className="mt-1 text-xl font-semibold text-neutral-900">プレースメント</Text>
           <Text className="mt-2 text-[11px] text-neutral-500">回答のみをサーバーに送り、モデル評価に利用します。</Text>
@@ -170,7 +189,7 @@ export default function OnboardingAssessmentScreen() {
                 m.role === "assistant" ? (
                   <View key={`assistant-${String(i)}`} className="mb-6 max-w-[95%] self-start">
                     <Text className="text-base leading-relaxed text-neutral-900">{m.jp}</Text>
-                    {m.en ? (
+                    {m.en && showAssistantEn ? (
                       <Text className="mt-2 text-sm leading-relaxed text-neutral-500">{m.en}</Text>
                     ) : null}
                   </View>

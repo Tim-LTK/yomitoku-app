@@ -1,9 +1,10 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { buildSelfReportedLevelLabel, useOnboardingDraft } from "@/app/onboarding/context";
+import { buildSelfReportedLevelLabel, useOnboardingDraft } from "@/lib/onboarding/context";
 import type { LevelCode } from "@/lib/onboarding/levelCodes";
 
 const LEVEL_ROWS: { code: LevelCode; jp: string; en: string }[] = [
@@ -19,11 +20,8 @@ export default function OnboardingLevelScreen() {
   const insets = useSafeAreaInsets();
   const { level, setLevel, studyingTowardNext, setStudyingTowardNext } = useOnboardingDraft();
 
-  const canContinue = Boolean(level !== null && studyingTowardNext !== null);
-  const labelPreview =
-    level && studyingTowardNext !== null
-      ? buildSelfReportedLevelLabel(level, studyingTowardNext)
-      : "";
+  const canContinue = level !== null;
+  const labelPreview = level ? buildSelfReportedLevelLabel(level, studyingTowardNext) : "";
 
   const selectLevel = useCallback(
     (code: LevelCode) => {
@@ -35,6 +33,20 @@ export default function OnboardingLevelScreen() {
   return (
     <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 160 }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          hitSlop={12}
+          onPress={() => router.back()}
+          className="mb-2 flex-row items-center gap-1 self-start py-2 active:opacity-80"
+        >
+          <Ionicons name="chevron-back" size={22} color="#4f46e5" />
+          <View className="-ml-0.5">
+            <Text className="text-base font-semibold text-indigo-700">戻る</Text>
+            <Text className="mt-0.5 text-[11px] text-neutral-500">Back</Text>
+          </View>
+        </Pressable>
+
         <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">ステップ 2 / 4</Text>
         <Text className="mt-4 text-2xl font-semibold leading-snug text-neutral-900">あなたの日本語レベルはどれに近いですか？</Text>
         <Text className="mt-2 text-base text-neutral-500">Pick the band that best matches you today.</Text>

@@ -47,7 +47,7 @@ export function buildSelfReportedLevelLabel(
   level: LevelCode | null,
   studyingTowardNext: boolean | null,
 ): string {
-  if (!level || studyingTowardNext === null) {
+  if (!level) {
     return "";
   }
   const base: Record<LevelCode, string> = {
@@ -59,7 +59,7 @@ export function buildSelfReportedLevelLabel(
     n1: "N1 相当",
   };
   const body = base[level];
-  const flag = studyingTowardNext ? "はい" : "いいえ";
+  const flag = studyingTowardNext === true ? "はい" : "いいえ";
   return `${body}／次レベル目標で勉強中: ${flag}`;
 }
 

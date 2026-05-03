@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useOnboardingDraft } from "@/app/onboarding/context";
+import { useOnboardingDraft } from "@/lib/onboarding/context";
 import { saveProfile } from "@/lib/storage/profile";
 import type { StudentProfile } from "@/lib/types/profile";
 

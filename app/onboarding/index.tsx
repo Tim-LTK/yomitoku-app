@@ -2,8 +2,8 @@ import { router } from "expo-router";
 import { useCallback, useMemo } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import type { NativeChipId } from "@/app/onboarding/context";
-import { buildNativeLanguagesForApi, useOnboardingDraft } from "@/app/onboarding/context";
+import type { NativeChipId } from "@/lib/onboarding/context";
+import { buildNativeLanguagesForApi, useOnboardingDraft } from "@/lib/onboarding/context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CHIPS: { id: NativeChipId; headline: string; sub: string }[] = [
