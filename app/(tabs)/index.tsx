@@ -22,6 +22,7 @@ import {
   saveBreakdown,
   type RecentBreakdownEntry,
 } from "@/lib/storage/breakdowns";
+import { clearProfile } from "@/lib/storage/profile";
 
 export default function HomeScreen() {
   const [japaneseInput, setJapaneseInput] = useState("");
@@ -79,6 +80,12 @@ export default function HomeScreen() {
     }
   }, [isSubmitting, japaneseInput]);
 
+  const handleDevResetProfile = useCallback(() => {
+    void clearProfile().then(() => {
+      router.replace("/onboarding");
+    });
+  }, []);
+
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-white"
@@ -91,6 +98,17 @@ export default function HomeScreen() {
       >
         <Text className="pt-6 text-center text-2xl font-semibold text-neutral-900">Yomitoku</Text>
         <Text className="mt-1 pb-4 text-center text-sm text-neutral-500">読み解く · Phase 1 · Analyse</Text>
+
+        {__DEV__ && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Reset profile — development only"
+            onPress={handleDevResetProfile}
+            className="mb-4 items-center self-center rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 active:opacity-90"
+          >
+            <Text className="text-xs font-medium text-amber-900">Reset Profile</Text>
+          </Pressable>
+        )}
 
         <UploadZone
           disabled={isSubmitting}
