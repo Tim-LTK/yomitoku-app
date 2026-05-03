@@ -33,6 +33,18 @@ function formatErrorTag(tag: string): string {
   return tag.replace(/_/g, " ");
 }
 
+function formatNextReviewSummaryDate(iso: string): string {
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) {
+    return iso;
+  }
+  return new Date(iso).toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 function sentenceBreakdownFromFlaggedGap(gap: KnowledgeGap): SentenceBreakdown {
   return {
     original: gap.sourceSentence,
@@ -468,7 +480,7 @@ export default function NigatePracticeScreen() {
                         <Text className="font-semibold text-indigo-900">{row.rec.suggestedIntervalDays}日後</Text>
                       </Text>
                       <Text className="mt-2 text-[11px] text-neutral-500">
-                        ISO: {row.rec.nextReviewAt}
+                        {formatNextReviewSummaryDate(row.rec.nextReviewAt)}
                       </Text>
                       <Text className="mt-2 text-xs leading-snug text-neutral-600">{row.rec.reasoning}</Text>
                     </>
