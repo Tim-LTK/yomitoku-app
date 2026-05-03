@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -66,9 +65,9 @@ export default function OnboardingAssessmentScreen() {
   }, [responses]);
 
   const scheduleScrollToEnd = useCallback(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    const scroll = () => scrollViewRef.current?.scrollToEnd({ animated: true });
+    setTimeout(scroll, 100);
+    setTimeout(scroll, 350);
   }, []);
 
   useEffect(() => {
@@ -208,7 +207,8 @@ export default function OnboardingAssessmentScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={88}
       className="flex-1 bg-neutral-50"
     >
       <View className="flex-1 bg-neutral-50" style={{ paddingTop: insets.top }}>
@@ -264,12 +264,12 @@ export default function OnboardingAssessmentScreen() {
             )}
           </View>
         ) : (
-          <>
+          <View style={{ flex: 1 }}>
             <ScrollView
               ref={scrollViewRef}
               keyboardShouldPersistTaps="handled"
+              style={{ flex: 1 }}
               contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
-              className="grow"
             >
               {messages.map((m, i) =>
                 m.role === "assistant" ? (
@@ -312,7 +312,7 @@ export default function OnboardingAssessmentScreen() {
 
             {!busy ? (
               <View
-                className="border-t border-neutral-200 bg-white px-4 pb-6 pt-3"
+                className="border-t border-neutral-200 bg-white px-4 pt-3"
                 style={{ paddingBottom: Math.max(insets.bottom + 8, 24) }}
               >
                 <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">あなたの答え</Text>
@@ -347,7 +347,7 @@ export default function OnboardingAssessmentScreen() {
                 ) : null}
               </View>
             ) : null}
-          </>
+          </View>
         )}
       </View>
     </KeyboardAvoidingView>
