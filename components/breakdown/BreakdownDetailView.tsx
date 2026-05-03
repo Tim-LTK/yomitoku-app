@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
 import {
@@ -16,6 +16,15 @@ export type BreakdownDetailViewProps = {
   routeId: string | undefined;
   payload: AnalyseResponse | undefined;
   onGoHome: () => void;
+};
+
+const Palette = {
+  neutral50: "#fafafa",
+  neutral100: "#f5f5f5",
+  neutral400: "#a3a3a3",
+  neutral800: "#262626",
+  neutral900: "#171717",
+  indigo800: "#3730a3",
 };
 
 export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDetailViewProps) {
@@ -126,40 +135,36 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
   }, [payload]);
 
   return (
-    <ScrollView className="flex-1 bg-neutral-50" keyboardShouldPersistTaps="handled">
-      <View className="px-4 py-4 pb-10">
+    <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
+      <View style={styles.content}>
         {!id ? (
-          <View className="items-center pt-16">
-            <Text className="text-center text-base text-neutral-800">Missing breakdown id.</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onGoHome}
-              className="mt-6 self-center rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
-            >
-              <Text className="text-center text-base font-semibold text-indigo-800">ホームへ</Text>
-            </Pressable>
+          <View style={styles.emptyBlock}>
+            <Text style={styles.emptyMessage}>Missing breakdown id.</Text>
+            <TouchableOpacity accessibilityRole="button" onPress={onGoHome} activeOpacity={0.8}>
+              <View style={styles.homeBtnInner}>
+                <Text style={styles.homeBtnText}>ホームへ</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         ) : null}
 
         {id && !payload ? (
-          <View className="items-center pt-16">
-            <Text className="text-center text-base leading-relaxed text-neutral-800">
+          <View style={styles.emptyBlock}>
+            <Text style={[styles.emptyMessage, styles.emptyMessageMultiline]}>
               This breakdown isn&apos;t cached anymore — start again from Home.
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onGoHome}
-              className="mt-6 self-center rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
-            >
-              <Text className="text-center text-base font-semibold text-indigo-800">ホームへ</Text>
-            </Pressable>
+            <TouchableOpacity accessibilityRole="button" onPress={onGoHome} activeOpacity={0.8}>
+              <View style={styles.homeBtnInner}>
+                <Text style={styles.homeBtnText}>ホームへ</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         ) : null}
 
         {headerBlurb ? (
-          <View className="mb-4">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">分析</Text>
-            <Text className="mt-2 text-xl font-semibold text-neutral-900">文 · {headerBlurb}</Text>
+          <View style={styles.header}>
+            <Text style={styles.headerEyebrow}>分析</Text>
+            <Text style={styles.headerTitle}>文 · {headerBlurb}</Text>
           </View>
         ) : null}
 
@@ -194,3 +199,57 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: Palette.neutral50,
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  emptyBlock: {
+    alignItems: "center",
+    paddingTop: 64,
+  },
+  emptyMessage: {
+    textAlign: "center",
+    fontSize: 16,
+    color: Palette.neutral800,
+  },
+  emptyMessageMultiline: {
+    lineHeight: 23,
+  },
+  homeBtnInner: {
+    marginTop: 24,
+    alignSelf: "center",
+    borderRadius: 8,
+    backgroundColor: Palette.neutral100,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  homeBtnText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "600",
+    color: Palette.indigo800,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  headerEyebrow: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: Palette.neutral400,
+  },
+  headerTitle: {
+    marginTop: 8,
+    fontSize: 20,
+    fontWeight: "600",
+    color: Palette.neutral900,
+  },
+});
