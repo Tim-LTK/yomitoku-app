@@ -13,11 +13,16 @@ export type BreakdownSentenceCardProps = {
   sentenceIndex: number;
   totalSentences: number;
   expanded: ExpandedElementKey;
+  grammarNotesExpanded: boolean;
+  nuanceExpanded: boolean;
+  onToggleGrammarNotes: () => void;
+  onToggleNuance: () => void;
   onToggleChip: (sentenceIndex: number, elementIndex: number) => void;
   onOpenExplain: (ctx: {
     element: BreakdownElement;
     sourceSentence: string;
     sentenceIndex: number;
+    elementIndex: number;
   }) => void;
 };
 
@@ -78,6 +83,10 @@ export function BreakdownSentenceCard({
   sentenceIndex,
   totalSentences,
   expanded,
+  grammarNotesExpanded,
+  nuanceExpanded,
+  onToggleGrammarNotes,
+  onToggleNuance,
   onToggleChip,
   onOpenExplain,
 }: BreakdownSentenceCardProps) {
@@ -131,6 +140,7 @@ export function BreakdownSentenceCard({
               element: breakdown.elements[openEl]!,
               sourceSentence,
               sentenceIndex,
+              elementIndex: openEl,
             })
           }
         />
@@ -138,32 +148,51 @@ export function BreakdownSentenceCard({
 
       {breakdown.grammarNotes.length > 0 ? (
         <>
-          <Text style={styles.grammarMemoTitle}>文法メモ</Text>
-          <View style={styles.noteList}>
-            {breakdown.grammarNotes.map((note, noteIdx) => (
-              <View key={`note-${sentenceIndex}-${noteIdx}`} style={styles.grammarMemoCard}>
-                <Text style={styles.grammarMemoPattern}>{note.pattern}</Text>
-                <Text style={styles.grammarMemoBody}>{note.explanation}</Text>
-                <Text style={styles.grammarMemoContext}>{note.timInContext}</Text>
-              </View>
-            ))}
-          </View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ expanded: grammarNotesExpanded }}
+            onPress={onToggleGrammarNotes}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.collapsibleHeader}>
+              {grammarNotesExpanded ? "▼ " : "▶ "}文法メモ
+            </Text>
+          </TouchableOpacity>
+          {grammarNotesExpanded ? (
+            <View style={styles.noteList}>
+              {breakdown.grammarNotes.map((note, noteIdx) => (
+                <View key={`note-${sentenceIndex}-${noteIdx}`} style={styles.grammarMemoCard}>
+                  <Text style={styles.grammarMemoPattern}>{note.pattern}</Text>
+                  <Text style={styles.grammarMemoBody}>{note.explanation}</Text>
+                  <Text style={styles.grammarMemoContext}>{note.timInContext}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </>
       ) : null}
 
-      {breakdown.nuanceNote.trim().length > 0 ? (
-        <>
-          <Text style={styles.nuanceSectionLabel}>ニュアンス</Text>
-          <View style={styles.nuanceCard}>
-            <Text style={styles.nuanceBody}>{breakdown.nuanceNote}</Text>
-          </View>
-        </>
-      ) : (
-        <>
-          <Text style={styles.nuanceSectionLabel}>ニュアンス</Text>
-          <Text style={styles.nuancePlaceholder}>—</Text>
-        </>
-      )}
+      <>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded: nuanceExpanded }}
+          onPress={onToggleNuance}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.collapsibleHeader}>
+            {nuanceExpanded ? "▼ " : "▶ "}ニュアンス
+          </Text>
+        </TouchableOpacity>
+        {nuanceExpanded ? (
+          breakdown.nuanceNote.trim().length > 0 ? (
+            <View style={styles.nuanceCard}>
+              <Text style={styles.nuanceBody}>{breakdown.nuanceNote}</Text>
+            </View>
+          ) : (
+            <Text style={styles.nuancePlaceholder}>—</Text>
+          )
+        ) : null}
+      </>
     </View>
   );
 }
@@ -294,7 +323,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Palette.white,
   },
-  grammarMemoTitle: {
+  collapsibleHeader: {
     marginTop: 24,
     fontSize: 12,
     fontWeight: "600",
@@ -327,14 +356,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: "italic",
     color: Palette.amber800,
-  },
-  nuanceSectionLabel: {
-    marginTop: 24,
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    color: Palette.neutral400,
   },
   nuanceCard: {
     marginTop: 8,

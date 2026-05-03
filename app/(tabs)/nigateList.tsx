@@ -5,10 +5,12 @@ import {
   FlatList,
   Pressable,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
 import { formatGrammarRoleLabel } from "@/lib/breakdown/formatRole";
 import { deleteKnowledgeGap, loadKnowledgeGaps } from "@/lib/storage/gaps";
 import { getRoleColour } from "@/lib/ui/roleColours";
@@ -16,6 +18,7 @@ import type { KnowledgeGap } from "@/lib/types/gaps";
 
 export default function NigateListScreen() {
   const [items, setItems] = useState<KnowledgeGap[]>([]);
+  const [explainGap, setExplainGap] = useState<KnowledgeGap | null>(null);
   const insets = useSafeAreaInsets();
 
   const refresh = useCallback(() => {
@@ -31,6 +34,8 @@ export default function NigateListScreen() {
     }, [refresh]),
   );
 
+  const noopFlagGap = useCallback(async () => {}, []);
+
   const renderItem = useCallback(({ item }: { item: KnowledgeGap }) => {
     const colours = getRoleColour(item.element.role);
     const flagged = new Date(item.createdAtIso);
@@ -43,7 +48,13 @@ export default function NigateListScreen() {
 
     return (
       <View className="mx-4 mb-3 flex-row overflow-hidden rounded-2xl border border-neutral-200 bg-white py-3 pl-4 pr-3">
-        <View className="min-w-0 flex-1">
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`解説: ${item.element.text}`}
+          className="min-w-0 flex-1"
+          onPress={() => setExplainGap(item)}
+          activeOpacity={0.9}
+        >
           <View className="flex-row flex-wrap items-center gap-2">
             <Text className="text-lg font-semibold text-neutral-900">{item.element.text}</Text>
             <Text className="text-sm text-neutral-600">（{item.element.reading}）</Text>
@@ -59,7 +70,7 @@ export default function NigateListScreen() {
             {item.sourceSentence}
           </Text>
           <Text className="mt-2 text-[11px] text-neutral-400">{when}</Text>
-        </View>
+        </TouchableOpacity>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Delete gap"
@@ -114,6 +125,20 @@ export default function NigateListScreen() {
           <Text className="mt-1 text-xs text-neutral-400">近日公開</Text>
         </Pressable>
       </View>
+
+      <ElementExplanationSheet
+        visible={explainGap !== null}
+        onDismiss={() => setExplainGap(null)}
+        loading={false}
+        error={null}
+        explanation={explainGap?.explanationSnapshot ?? null}
+        element={explainGap?.element ?? null}
+        sentencePreview={explainGap?.sourceSentence ?? null}
+        onFlagGap={noopFlagGap}
+        flagBusy={false}
+        flagError={null}
+        gapSaved={explainGap !== null}
+      />
     </View>
   );
 }

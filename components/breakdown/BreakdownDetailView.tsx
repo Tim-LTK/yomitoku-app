@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
@@ -30,6 +30,10 @@ const Palette = {
 export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDetailViewProps) {
   const id = routeId;
 
+  const explainCacheRef = useRef(new Map<string, ElementExplanation>());
+  const [isMemoOpen, setIsMemoOpen] = useState(false);
+  const [isNuanceOpen, setIsNuanceOpen] = useState(false);
+
   const [expandedElement, setExpandedElement] = useState<ExpandedElementKey>(null);
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -59,21 +63,34 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
       element: BreakdownElement;
       sourceSentence: string;
       sentenceIndex: number;
+      elementIndex: number;
     }) => {
+      const cacheKey = `${ctx.sentenceIndex}-${ctx.elementIndex}`;
+      const cached = explainCacheRef.current.get(cacheKey);
+
       setSheetOpen(true);
-      setSheetLoading(true);
-      setSheetError(null);
-      setExplanation(null);
       setSheetElement(ctx.element);
       setSentenceText(ctx.sourceSentence);
       setSentenceOrdinal(ctx.sentenceIndex);
       setGapSaved(false);
       setFlagError(null);
+
+      if (cached) {
+        setExplanation(cached);
+        setSheetLoading(false);
+        setSheetError(null);
+        return;
+      }
+
+      setExplanation(null);
+      setSheetLoading(true);
+      setSheetError(null);
       try {
         const body = await postExplain({
           breakdownElement: ctx.element,
           sourceSentence: ctx.sourceSentence,
         });
+        explainCacheRef.current.set(cacheKey, body);
         setExplanation(body);
       } catch (err) {
         if (err instanceof AnalyseClientError) {
@@ -176,6 +193,10 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
                 sentenceIndex={index}
                 totalSentences={sentenceCount}
                 expanded={expandedElement}
+                grammarNotesExpanded={isMemoOpen}
+                nuanceExpanded={isNuanceOpen}
+                onToggleGrammarNotes={() => setIsMemoOpen((open) => !open)}
+                onToggleNuance={() => setIsNuanceOpen((open) => !open)}
                 onToggleChip={toggleChip}
                 onOpenExplain={handleOpenExplain}
               />
