@@ -43,27 +43,29 @@ export function buildNativeLanguagesForApi(
   return out;
 }
 
-export function buildSelfReportedLevelLabel(
-  level: LevelCode | null,
-  studyingTowardNext: boolean | null,
-): string {
+export function buildSelfReportedLevelLabel(level: LevelCode | null): string {
   if (!level) {
     return "";
   }
   const base: Record<LevelCode, string> = {
-    complete_beginner: "初めて",
+    hajimete: "初めて",
     n5: "N5 相当",
+    n5_n4: "N5〜N4",
     n4: "N4 相当",
+    n4_n3: "N4〜N3",
     n3: "N3 相当",
     n2: "N2 相当",
   };
-  const body = base[level];
-  const flag = studyingTowardNext === true ? "はい" : "いいえ";
-  return `${body}／次レベル目標で勉強中: ${flag}`;
+  return base[level];
 }
 
 function placementUsesBilingualCopy(levelCode: LevelCode): boolean {
-  return levelCode === "complete_beginner" || levelCode === "n5" || levelCode === "n4";
+  return (
+    levelCode === "hajimete" ||
+    levelCode === "n5" ||
+    levelCode === "n5_n4" ||
+    levelCode === "n4"
+  );
 }
 
 export function getOpeningPlacementMessage(): { jp: string; en: string } {
@@ -99,12 +101,10 @@ export type OnboardingDraft = {
   selectedNativeIds: NativeChipId[];
   otherNativeDetail: string;
   level: LevelCode | null;
-  studyingTowardNext: boolean | null;
   pendingProfile: StudentProfile | null;
   setSelectedNativeIds: (ids: NativeChipId[]) => void;
   setOtherNativeDetail: (s: string) => void;
   setLevel: (l: LevelCode | null) => void;
-  setStudyingTowardNext: (b: boolean | null) => void;
   setPendingProfile: (p: StudentProfile | null) => void;
   reset: () => void;
 };
@@ -115,14 +115,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [selectedNativeIds, setSelectedNativeIds] = useState<NativeChipId[]>([]);
   const [otherNativeDetail, setOtherNativeDetail] = useState("");
   const [level, setLevel] = useState<LevelCode | null>(null);
-  const [studyingTowardNext, setStudyingTowardNext] = useState<boolean | null>(null);
   const [pendingProfile, setPendingProfile] = useState<StudentProfile | null>(null);
 
   const reset = useCallback(() => {
     setSelectedNativeIds([]);
     setOtherNativeDetail("");
     setLevel(null);
-    setStudyingTowardNext(null);
     setPendingProfile(null);
   }, []);
 
@@ -131,23 +129,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       selectedNativeIds,
       otherNativeDetail,
       level,
-      studyingTowardNext,
       pendingProfile,
       setSelectedNativeIds,
       setOtherNativeDetail,
       setLevel,
-      setStudyingTowardNext,
       setPendingProfile,
       reset,
     }),
-    [
-      level,
-      otherNativeDetail,
-      pendingProfile,
-      reset,
-      selectedNativeIds,
-      studyingTowardNext,
-    ],
+    [level, otherNativeDetail, pendingProfile, reset, selectedNativeIds],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

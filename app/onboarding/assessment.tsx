@@ -34,9 +34,8 @@ export default function OnboardingAssessmentScreen() {
   const insets = useSafeAreaInsets();
   const draft = useOnboardingDraft();
 
-  const levelSlugForTranslation = draft.level === "complete_beginner" ? "hajimete" : draft.level;
-  const showAssistantEn = showTranslation(levelSlugForTranslation);
-  const inputPlaceholder = showTranslation(levelSlugForTranslation)
+  const showAssistantEn = showTranslation(draft.level);
+  const inputPlaceholder = showTranslation(draft.level)
     ? "自由記述 · Free response"
     : "自由記述";
 
@@ -46,8 +45,8 @@ export default function OnboardingAssessmentScreen() {
   );
 
   const levelLabel = useMemo(
-    () => buildSelfReportedLevelLabel(draft.level, draft.studyingTowardNext),
-    [draft.level, draft.studyingTowardNext],
+    () => buildSelfReportedLevelLabel(draft.level),
+    [draft.level],
   );
 
   const questions = useMemo(() => (draft.level ? getPlacementQuestions(draft.level) : []), [draft.level]);
