@@ -102,6 +102,8 @@ export type OnboardingDraft = {
   otherNativeDetail: string;
   level: LevelCode | null;
   pendingProfile: StudentProfile | null;
+  /** Development only — session latched true when onboarding opened with ?autoFill=true */
+  devAssessmentAutoFillRequested: boolean;
   setSelectedNativeIds: (ids: NativeChipId[]) => void;
   setOtherNativeDetail: (s: string) => void;
   setLevel: (l: LevelCode | null) => void;
@@ -111,7 +113,13 @@ export type OnboardingDraft = {
 
 const Ctx = createContext<OnboardingDraft | null>(null);
 
-export function OnboardingProvider({ children }: { children: ReactNode }) {
+export function OnboardingProvider({
+  children,
+  devAssessmentAutoFillRequested = false,
+}: {
+  children: ReactNode;
+  devAssessmentAutoFillRequested?: boolean;
+}) {
   const [selectedNativeIds, setSelectedNativeIds] = useState<NativeChipId[]>([]);
   const [otherNativeDetail, setOtherNativeDetail] = useState("");
   const [level, setLevel] = useState<LevelCode | null>(null);
@@ -124,19 +132,29 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPendingProfile(null);
   }, []);
 
+  const devAutoFillPinned = __DEV__ ? devAssessmentAutoFillRequested : false;
+
   const value = useMemo(
     () => ({
       selectedNativeIds,
       otherNativeDetail,
       level,
       pendingProfile,
+      devAssessmentAutoFillRequested: devAutoFillPinned,
       setSelectedNativeIds,
       setOtherNativeDetail,
       setLevel,
       setPendingProfile,
       reset,
     }),
-    [level, otherNativeDetail, pendingProfile, reset, selectedNativeIds],
+    [
+      devAutoFillPinned,
+      level,
+      otherNativeDetail,
+      pendingProfile,
+      reset,
+      selectedNativeIds,
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { UploadZone } from "@/components/UploadZone";
 import { postAnalyse } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
@@ -80,11 +82,26 @@ export default function HomeScreen() {
     }
   }, [isSubmitting, japaneseInput]);
 
-  const handleDevResetProfile = useCallback(() => {
-    void clearProfile().then(() => {
-      router.replace("/onboarding");
-    });
+  const clearProfileAndExplainCacheDev = useCallback(async () => {
+    await clearProfile();
+    await AsyncStorage.multiRemove(
+      (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith("yomitoku:explain:")),
+    );
   }, []);
+
+  const handleDevResetProfile = useCallback(() => {
+    void (async () => {
+      await clearProfileAndExplainCacheDev();
+      router.replace("/onboarding");
+    })();
+  }, [clearProfileAndExplainCacheDev]);
+
+  const handleDevResetAndAutoOnboard = useCallback(() => {
+    void (async () => {
+      await clearProfileAndExplainCacheDev();
+      router.replace("/onboarding?autoFill=true");
+    })();
+  }, [clearProfileAndExplainCacheDev]);
 
   return (
     <KeyboardAvoidingView
@@ -99,16 +116,26 @@ export default function HomeScreen() {
         <Text className="pt-6 text-center text-2xl font-semibold text-neutral-900">Yomitoku</Text>
         <Text className="mt-1 pb-4 text-center text-sm text-neutral-500">読み解く · Phase 1 · Analyse</Text>
 
-        {__DEV__ && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Reset profile — development only"
-            onPress={handleDevResetProfile}
-            className="mb-4 items-center self-center rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 active:opacity-90"
-          >
-            <Text className="text-xs font-medium text-amber-900">Reset Profile</Text>
-          </Pressable>
-        )}
+        {__DEV__ ? (
+          <View className="mb-4 flex-row flex-wrap items-center justify-center gap-3">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reset profile — development only"
+              onPress={handleDevResetProfile}
+              className="items-center rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 active:opacity-90"
+            >
+              <Text className="text-xs font-medium text-amber-900">Reset Profile</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reset profile then open onboarding with dev auto-fill"
+              onPress={handleDevResetAndAutoOnboard}
+              className="items-center rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 active:opacity-90"
+            >
+              <Text className="text-xs font-medium text-amber-900">Dev Reset + Auto Onboard</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <UploadZone
           disabled={isSubmitting}

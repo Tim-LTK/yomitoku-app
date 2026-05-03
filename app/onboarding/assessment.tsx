@@ -52,6 +52,7 @@ export default function OnboardingAssessmentScreen() {
   const questions = useMemo(() => (draft.level ? getPlacementQuestions(draft.level) : []), [draft.level]);
 
   const seededRef = useRef(false);
+  const devAutoSubmitRanRef = useRef(false);
   const responsesRef = useRef<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
@@ -74,6 +75,9 @@ export default function OnboardingAssessmentScreen() {
     if (seededRef.current || draft.level === null || nativeForApi.length === 0) {
       return;
     }
+    if (__DEV__ && draft.devAssessmentAutoFillRequested) {
+      return;
+    }
     const qs = getPlacementQuestions(draft.level);
     if (qs.length !== 5) {
       return;
@@ -89,7 +93,7 @@ export default function OnboardingAssessmentScreen() {
       },
     ]);
     scheduleScrollToEnd();
-  }, [draft.level, nativeForApi, showAssistantEn, scheduleScrollToEnd]);
+  }, [draft.devAssessmentAutoFillRequested, draft.level, nativeForApi, showAssistantEn, scheduleScrollToEnd]);
 
   const finalize = useCallback(
     async (five: string[]) => {
@@ -122,6 +126,25 @@ export default function OnboardingAssessmentScreen() {
     },
     [draft.level, draft.setPendingProfile, levelLabel, nativeForApi],
   );
+
+  useEffect(() => {
+    if (!__DEV__ || !draft.devAssessmentAutoFillRequested || devAutoSubmitRanRef.current) {
+      return;
+    }
+    if (draft.level === null || nativeForApi.length === 0 || !levelLabel) {
+      return;
+    }
+    devAutoSubmitRanRef.current = true;
+    seededRef.current = true;
+    const five = [
+      "私の名前はティムです。香港出身で、今シンガポールに住んでいます。",
+      "毎日、会社でプロダクトマネージャーの仕事をしています。",
+      "きのうは日本語を勉強しました。新しい文法を練習しました。",
+      "日本語を勉強している理由は、日本に住みたいからです。",
+      "ながらという文法が少し難しいです。例えば、コーヒーを飲みながら新聞を読みます。",
+    ];
+    void finalize(five);
+  }, [draft.devAssessmentAutoFillRequested, draft.level, finalize, levelLabel, nativeForApi]);
 
   const submitAnswer = useCallback(
     (payload: { stored: string; display: string }) => {
@@ -180,6 +203,8 @@ export default function OnboardingAssessmentScreen() {
 
   const missingDeps = draft.level === null || nativeForApi.length === 0 || !levelLabel;
 
+  const minimalDevAssessmentUi = __DEV__ && draft.devAssessmentAutoFillRequested && !missingDeps;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -217,6 +242,26 @@ export default function OnboardingAssessmentScreen() {
             >
               <Text className="text-sm font-semibold text-white">やり直す</Text>
             </Pressable>
+          </View>
+        ) : minimalDevAssessmentUi ? (
+          <View className="flex-1 items-center justify-center gap-6 px-8 pb-24">
+            {error ? (
+              <>
+                <Text className="text-center text-sm text-red-900">{error}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  className="rounded-xl bg-neutral-900 px-6 py-3"
+                  onPress={() => router.replace("/onboarding/level")}
+                >
+                  <Text className="text-sm font-semibold text-white">前に戻る</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <ActivityIndicator accessibilityLabel="Dev自動プレースメント中" />
+                <Text className="text-center text-sm text-neutral-600">Dev自動プレースメント中…</Text>
+              </>
+            )}
           </View>
         ) : (
           <>
