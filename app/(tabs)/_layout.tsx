@@ -9,7 +9,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "ホーム",
           tabBarIcon: ({ color, focused, size }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
@@ -21,12 +21,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="history"
+        name="nigateList"
         options={{
-          title: "History",
+          title: "苦手",
           tabBarIcon: ({ color, focused, size }) => (
             <Ionicons
-              name={focused ? "time" : "time-outline"}
+              name={focused ? "bookmark" : "bookmark-outline"}
               size={size}
               color={color}
               style={{ fontFamily: iconFontFamily }}

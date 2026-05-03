@@ -2,8 +2,11 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import {
+  BreakdownSentenceCard,
+  type ExpandedElementKey,
+} from "@/components/BreakdownSentenceCard";
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
-import { SentenceBreakdownView } from "@/components/SentenceBreakdownView";
 import { postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { getAnalyseResult } from "@/lib/breakdown/routePayload";
@@ -15,6 +18,8 @@ export default function BreakdownDetailScreen() {
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const payload = id ? getAnalyseResult(id) : undefined;
+
+  const [expandedElement, setExpandedElement] = useState<ExpandedElementKey>(null);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetLoading, setSheetLoading] = useState(false);
@@ -28,10 +33,22 @@ export default function BreakdownDetailScreen() {
   const [flagError, setFlagError] = useState<string | null>(null);
   const [gapSaved, setGapSaved] = useState(false);
 
-  const breakdownCount = payload?.breakdowns.length ?? 0;
+  const sentenceCount = payload?.breakdowns.length ?? 0;
 
-  const handleElementPress = useCallback(
-    async (ctx: { element: BreakdownElement; sourceSentence: string; sentenceIndex: number }) => {
+  const toggleChip = useCallback((sentenceIndex: number, elementIndex: number) => {
+    setExpandedElement((prev) =>
+      prev?.sentenceIndex === sentenceIndex && prev?.elementIndex === elementIndex
+        ? null
+        : { sentenceIndex, elementIndex },
+    );
+  }, []);
+
+  const handleOpenExplain = useCallback(
+    async (ctx: {
+      element: BreakdownElement;
+      sourceSentence: string;
+      sentenceIndex: number;
+    }) => {
       setSheetOpen(true);
       setSheetLoading(true);
       setSheetError(null);
@@ -99,11 +116,11 @@ export default function BreakdownDetailScreen() {
     setFlagError(null);
   }, []);
 
-  const subtitle = useMemo(() => {
+  const headerBlurb = useMemo(() => {
     if (!payload) {
       return null;
     }
-    return `${payload.breakdowns.length} sentence${payload.breakdowns.length === 1 ? "" : "s"}`;
+    return `全${payload.breakdowns.length}文`;
   }, [payload]);
 
   return (
@@ -117,7 +134,7 @@ export default function BreakdownDetailScreen() {
                 accessibilityRole="button"
                 className="mt-6 self-center rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
               >
-                <Text className="text-center text-base font-semibold text-indigo-800">Back to Home</Text>
+                <Text className="text-center text-base font-semibold text-indigo-800">ホームへ</Text>
               </Pressable>
             </Link>
           </View>
@@ -133,30 +150,29 @@ export default function BreakdownDetailScreen() {
                 accessibilityRole="button"
                 className="mt-6 self-center rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
               >
-                <Text className="text-center text-base font-semibold text-indigo-800">Back to Home</Text>
+                <Text className="text-center text-base font-semibold text-indigo-800">ホームへ</Text>
               </Pressable>
             </Link>
           </View>
         ) : null}
 
-        {subtitle ? (
-          <View className="mb-5">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Breakdown</Text>
-            <Text className="mt-2 text-xl font-semibold text-neutral-900">Sentences · {subtitle}</Text>
-            <Text className="mt-2 text-sm leading-relaxed text-neutral-500">
-              Expand a sentence, then tap any segment chip for a tutor-style explanation.
-            </Text>
+        {headerBlurb ? (
+          <View className="mb-4">
+            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">分析</Text>
+            <Text className="mt-2 text-xl font-semibold text-neutral-900">文 · {headerBlurb}</Text>
           </View>
         ) : null}
 
         {payload
           ? payload.breakdowns.map((breakdown, index) => (
-              <SentenceBreakdownView
+              <BreakdownSentenceCard
                 key={`sentence-${index}`}
                 breakdown={breakdown}
-                index={index}
-                defaultExpanded={breakdownCount === 1 ? true : index === 0}
-                onElementPress={handleElementPress}
+                sentenceIndex={index}
+                totalSentences={sentenceCount}
+                expanded={expandedElement}
+                onToggleChip={toggleChip}
+                onOpenExplain={handleOpenExplain}
               />
             ))
           : null}

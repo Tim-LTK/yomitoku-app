@@ -198,7 +198,7 @@ export default function PracticeScreen() {
                 accessibilityRole="button"
                 className="mt-6 rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
               >
-                <Text className="text-base font-semibold text-indigo-800">Back to Home</Text>
+                <Text className="text-base font-semibold text-indigo-800">ホームへ</Text>
               </Pressable>
             </Link>
           </View>
@@ -214,7 +214,7 @@ export default function PracticeScreen() {
                 accessibilityRole="button"
                 className="mt-6 rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
               >
-                <Text className="text-base font-semibold text-indigo-800">Back to Home</Text>
+                <Text className="text-base font-semibold text-indigo-800">ホームへ</Text>
               </Pressable>
             </Link>
           </View>
@@ -229,20 +229,20 @@ export default function PracticeScreen() {
               onPress={() => router.back()}
               className="mt-6 rounded-lg bg-neutral-100 px-4 py-2.5 active:opacity-80"
             >
-              <Text className="text-base font-semibold text-indigo-800">Back</Text>
+              <Text className="text-base font-semibold text-indigo-800">戻る</Text>
             </Pressable>
           </View>
         ) : null}
 
         {sentenceBreakdown && phase === "drills" ? (
           <View className="grow">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Phase 2 · Practice</Text>
-            <Text className="mt-1 text-xs leading-snug text-neutral-400">Ground: {sentenceBreakdown.original}</Text>
+            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">練習</Text>
+            <Text className="mt-1 text-xs leading-snug text-neutral-400">元の文：{sentenceBreakdown.original}</Text>
 
             {generateLoading ? (
               <View className="mt-10 items-center py-8">
                 <ActivityIndicator accessibilityLabel="Loading practice questions" size="large" />
-                <Text className="mt-4 text-center text-sm text-neutral-500">Preparing questions…</Text>
+                <Text className="mt-4 text-center text-sm text-neutral-500">問題を準備しています…</Text>
               </View>
             ) : null}
 
@@ -257,7 +257,7 @@ export default function PracticeScreen() {
                     generateLoading ? "bg-neutral-200" : "bg-red-900 active:opacity-90"
                   }`}
                 >
-                  <Text className="text-sm font-semibold text-white">Try again</Text>
+                  <Text className="text-sm font-semibold text-white">再試行</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -265,7 +265,7 @@ export default function PracticeScreen() {
             {!generateLoading && !generateError && totalQuestions > 0 && currentItem ? (
               <View className="mt-6">
                 <Text className="text-sm font-medium text-neutral-500">
-                  Question {questionIndex + 1} of {totalQuestions}
+                  第{questionIndex + 1}問 / 全{totalQuestions}問
                 </Text>
                 <View className="mt-2 self-start rounded-full bg-neutral-100 px-3 py-1">
                   <Text className="text-xs font-medium uppercase tracking-wide text-neutral-600">
@@ -279,7 +279,7 @@ export default function PracticeScreen() {
 
                 {feedbackResult === null ? (
                   <View className="mt-5">
-                    <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Your answer</Text>
+                    <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">あなたの答え</Text>
                     <TextInput
                       accessibilityLabel="Practice answer"
                       className="mt-2 min-h-[100px] w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-3 text-base leading-relaxed text-neutral-900"
@@ -312,19 +312,19 @@ export default function PracticeScreen() {
                       {evaluateLoading ? (
                         <ActivityIndicator accessibilityLabel="Evaluating answer" color="#ffffff" />
                       ) : (
-                        <Text className="text-base font-semibold text-white">Submit answer</Text>
+                        <Text className="text-base font-semibold text-white">答えを送る</Text>
                       )}
                     </Pressable>
                   </View>
                 ) : (
                   <View className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4">
-                    <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Score</Text>
+                    <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">点数</Text>
                     <Text className="mt-1 text-3xl font-bold text-neutral-900">{feedbackResult.qualityScore}</Text>
-                    <Text className="text-sm text-neutral-500">out of 5</Text>
+                    <Text className="text-sm text-neutral-500">/ 5</Text>
 
-                    <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Error tags</Text>
+                    <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-400">エラー</Text>
                     {feedbackResult.errorTags.length === 0 ? (
-                      <Text className="mt-2 text-sm text-neutral-600">None — nice work.</Text>
+                      <Text className="mt-2 text-sm text-neutral-600">なし</Text>
                     ) : (
                       <View className="mt-2 flex-row flex-wrap gap-2">
                         {feedbackResult.errorTags.map((tag) => (
@@ -338,7 +338,7 @@ export default function PracticeScreen() {
                       </View>
                     )}
 
-                    <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Feedback</Text>
+                    <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-400">フィードバック</Text>
                     <Text className="mt-2 text-base leading-relaxed text-neutral-800">{feedbackResult.feedback}</Text>
 
                     <Pressable
@@ -350,7 +350,7 @@ export default function PracticeScreen() {
                       className="mt-6 w-full items-center rounded-xl bg-indigo-600 py-4 active:opacity-90"
                     >
                       <Text className="text-base font-semibold text-white">
-                        {questionIndex >= totalQuestions - 1 ? "View summary" : "Next question"}
+                        {questionIndex >= totalQuestions - 1 ? "まとめ" : "次の問題"}
                       </Text>
                     </Pressable>
                   </View>
@@ -362,31 +362,31 @@ export default function PracticeScreen() {
 
         {phase === "summary" && sentenceBreakdown ? (
           <View className="grow">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Practice complete</Text>
-            <Text className="mt-3 text-2xl font-semibold text-neutral-900">Summary</Text>
+            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">練習完了</Text>
+            <Text className="mt-3 text-2xl font-semibold text-neutral-900">まとめ</Text>
 
             <View className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-5">
-              <Text className="text-xs font-semibold uppercase tracking-wide text-indigo-800">Overall score</Text>
+              <Text className="text-xs font-semibold uppercase tracking-wide text-indigo-800">平均点</Text>
               <Text className="mt-2 text-3xl font-bold text-indigo-950">{overall}</Text>
-              <Text className="text-sm text-indigo-800">average out of 5</Text>
+              <Text className="text-sm text-indigo-800">5点満点の平均</Text>
               <Text className="mt-3 text-sm leading-relaxed text-indigo-900">
-                You earned <Text className="font-semibold">{totalEarned}</Text> of{" "}
-                <Text className="font-semibold">{maxPossible}</Text> points this session.
+                合計 <Text className="font-semibold">{totalEarned}</Text> /{" "}
+                <Text className="font-semibold">{maxPossible}</Text> 点
               </Text>
             </View>
 
-            <Text className="mt-8 text-xs font-semibold uppercase tracking-wide text-neutral-400">By question</Text>
+            <Text className="mt-8 text-xs font-semibold uppercase tracking-wide text-neutral-400">各問</Text>
             <View className="mt-3 gap-4">
               {completedRounds.map((round, i) => (
                 <View key={`${round.item.itemId}-${i}`} className="rounded-xl border border-neutral-200 bg-white px-4 py-4">
                   <Text className="text-xs font-medium uppercase tracking-wide text-neutral-400">
-                    Q{i + 1} · {round.item.practiceType.replace(/_/g, " ")}
+                    第{i + 1}問 · {round.item.practiceType.replace(/_/g, " ")}
                   </Text>
                   <Text className="mt-2 text-xs text-neutral-500" numberOfLines={2}>
                     {round.item.prompt}
                   </Text>
                   <Text className="mt-3 text-sm font-semibold text-neutral-900">
-                    Score {round.result.qualityScore}/5
+                    点数 {round.result.qualityScore}/5
                   </Text>
                   {round.result.errorTags.length > 0 ? (
                     <View className="mt-2 flex-row flex-wrap gap-2">
@@ -412,11 +412,11 @@ export default function PracticeScreen() {
               onPress={() => router.back()}
               className="mt-8 w-full items-center rounded-xl border border-neutral-300 py-4 active:opacity-90"
             >
-              <Text className="text-base font-semibold text-neutral-900">Back to breakdown</Text>
+              <Text className="text-base font-semibold text-neutral-900">分析に戻る</Text>
             </Pressable>
             <Link href="/" asChild>
               <Pressable className="mt-3 w-full items-center py-3 active:opacity-80">
-                <Text className="text-base font-semibold text-indigo-800">Home</Text>
+                <Text className="text-base font-semibold text-indigo-800">ホーム</Text>
               </Pressable>
             </Link>
           </View>

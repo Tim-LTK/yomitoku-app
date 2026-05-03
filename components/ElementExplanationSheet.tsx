@@ -64,19 +64,19 @@ export function ElementExplanationSheet({
           }
         >
           <View className="mb-3 flex-row items-center justify-between border-b border-neutral-100 pb-3">
-            <Text className="text-lg font-semibold text-neutral-900">Explanation</Text>
+            <Text className="text-lg font-semibold text-neutral-900">解説</Text>
             <Pressable
               accessibilityRole="button"
               onPress={onDismiss}
               className="rounded-lg bg-neutral-100 px-3 py-2 active:opacity-80"
             >
-              <Text className="text-sm font-semibold text-neutral-800">Close</Text>
+              <Text className="text-sm font-semibold text-neutral-800">閉じる</Text>
             </Pressable>
           </View>
 
           {sentencePreview ? (
             <Text className="pb-3 text-xs leading-snug text-neutral-500" numberOfLines={2}>
-              Sentence · {sentencePreview}
+              文 · {sentencePreview}
             </Text>
           ) : null}
 
@@ -93,8 +93,8 @@ export function ElementExplanationSheet({
           <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
             {loading ? (
               <View className="items-center py-16">
-                <ActivityIndicator accessibilityLabel="Loading explanation" />
-                <Text className="mt-3 text-sm text-neutral-500">Loading tutor note…</Text>
+                <ActivityIndicator accessibilityLabel="読み込み中" />
+                <Text className="mt-3 text-sm text-neutral-500">読み込み中…</Text>
               </View>
             ) : null}
 
@@ -111,7 +111,7 @@ export function ElementExplanationSheet({
                 {pitfalls && pitfalls.trim().length > 0 ? (
                   <View className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
                     <Text className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                      Common pitfalls
+                      よくある間違い
                     </Text>
                     <Text className="mt-2 text-sm leading-relaxed text-amber-950">{pitfalls}</Text>
                   </View>
@@ -124,7 +124,7 @@ export function ElementExplanationSheet({
             <View className="mt-5 border-t border-neutral-100 pt-4">
               {gapSaved ? (
                 <Text className="mb-3 text-center text-sm font-medium text-emerald-700">
-                  Saved to knowledge gaps.
+                  苦手リストに追加しました ✓
                 </Text>
               ) : null}
               {flagError ? (
@@ -142,9 +142,9 @@ export function ElementExplanationSheet({
                 }`}
               >
                 {flagBusy ? (
-                  <ActivityIndicator accessibilityLabel="Saving gap" color="#ffffff" />
+                  <ActivityIndicator accessibilityLabel="保存中" color="#ffffff" />
                 ) : (
-                  <Text className="text-base font-semibold text-white">Flag as gap</Text>
+                  <Text className="text-base font-semibold text-white">苦手に追加</Text>
                 )}
               </Pressable>
             </View>
