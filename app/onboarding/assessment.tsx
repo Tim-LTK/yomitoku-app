@@ -53,11 +53,23 @@ export default function OnboardingAssessmentScreen() {
   const questions = useMemo(() => (draft.level ? getPlacementQuestions(draft.level) : []), [draft.level]);
 
   const seededRef = useRef(false);
+  const responsesRef = useRef<string[]>([]);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
   const [responses, setResponses] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    responsesRef.current = responses;
+  }, [responses]);
+
+  const scheduleScrollToEnd = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
 
   useEffect(() => {
     if (seededRef.current || draft.level === null || nativeForApi.length === 0) {
@@ -77,7 +89,8 @@ export default function OnboardingAssessmentScreen() {
         en: showAssistantEn ? qs[0].en : undefined,
       },
     ]);
-  }, [draft.level, nativeForApi, showAssistantEn]);
+    scheduleScrollToEnd();
+  }, [draft.level, nativeForApi, showAssistantEn, scheduleScrollToEnd]);
 
   const finalize = useCallback(
     async (five: string[]) => {
@@ -113,19 +126,26 @@ export default function OnboardingAssessmentScreen() {
 
   const submitAnswer = useCallback(
     (payload: { stored: string; display: string }) => {
-      if (busy || responses.length >= 5 || questions.length !== 5) {
+      if (busy || questions.length !== 5) {
+        return;
+      }
+
+      const prev = responsesRef.current;
+      if (prev.length >= 5) {
         return;
       }
 
       const { stored: storedForApi, display: displayJp } = payload;
-      const nextAnswers = [...responses, storedForApi];
+      const nextAnswers = [...prev, storedForApi];
+      responsesRef.current = nextAnswers;
+      setResponses(nextAnswers);
       setInput("");
 
       if (nextAnswers.length < 5) {
         const qi = nextAnswers.length;
         const q = questions[qi];
-        setMessages((prev) => [
-          ...prev,
+        setMessages((m) => [
+          ...m,
           { role: "user", jp: displayJp },
           {
             role: "assistant",
@@ -133,31 +153,31 @@ export default function OnboardingAssessmentScreen() {
             en: showAssistantEn ? q.en : undefined,
           },
         ]);
-        setResponses(nextAnswers);
+        scheduleScrollToEnd();
         return;
       }
 
-      setMessages((prev) => [...prev, { role: "user", jp: displayJp }]);
-      setResponses(nextAnswers);
+      setMessages((m) => [...m, { role: "user", jp: displayJp }]);
+      scheduleScrollToEnd();
       void finalize(nextAnswers);
     },
-    [busy, finalize, questions, responses, showAssistantEn],
+    [busy, finalize, questions, showAssistantEn, scheduleScrollToEnd],
   );
 
   const onSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || busy || responses.length >= 5 || questions.length !== 5) {
+    if (!trimmed || busy || questions.length !== 5 || responsesRef.current.length >= 5) {
       return;
     }
     submitAnswer({ stored: trimmed, display: trimmed });
-  }, [busy, input, questions, responses.length, submitAnswer]);
+  }, [busy, input, questions.length, submitAnswer]);
 
   const onSkip = useCallback(() => {
-    if (busy || responses.length >= 5 || questions.length !== 5) {
+    if (busy || questions.length !== 5 || responsesRef.current.length >= 5) {
       return;
     }
     submitAnswer({ stored: "", display: "スキップ · Skipped" });
-  }, [busy, questions, responses.length, submitAnswer]);
+  }, [busy, questions.length, submitAnswer]);
 
   const missingDeps = draft.level === null || nativeForApi.length === 0 || !levelLabel;
 
@@ -202,6 +222,7 @@ export default function OnboardingAssessmentScreen() {
         ) : (
           <>
             <ScrollView
+              ref={scrollViewRef}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
               className="grow"
