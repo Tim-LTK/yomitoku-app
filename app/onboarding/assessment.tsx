@@ -36,6 +36,9 @@ export default function OnboardingAssessmentScreen() {
 
   const levelSlugForTranslation = draft.level === "complete_beginner" ? "hajimete" : draft.level;
   const showAssistantEn = showTranslation(levelSlugForTranslation);
+  const inputPlaceholder = showTranslation(levelSlugForTranslation)
+    ? "自由記述 · Free response"
+    : "自由記述";
 
   const nativeForApi = useMemo(
     () => buildNativeLanguagesForApi(draft.selectedNativeIds, draft.otherNativeDetail),
@@ -108,35 +111,53 @@ export default function OnboardingAssessmentScreen() {
     [draft.level, draft.setPendingProfile, levelLabel, nativeForApi],
   );
 
+  const submitAnswer = useCallback(
+    (payload: { stored: string; display: string }) => {
+      if (busy || responses.length >= 5 || questions.length !== 5) {
+        return;
+      }
+
+      const { stored: storedForApi, display: displayJp } = payload;
+      const nextAnswers = [...responses, storedForApi];
+      setInput("");
+
+      if (nextAnswers.length < 5) {
+        const qi = nextAnswers.length;
+        const q = questions[qi];
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", jp: displayJp },
+          {
+            role: "assistant",
+            jp: q.jp,
+            en: showAssistantEn ? q.en : undefined,
+          },
+        ]);
+        setResponses(nextAnswers);
+        return;
+      }
+
+      setMessages((prev) => [...prev, { role: "user", jp: displayJp }]);
+      setResponses(nextAnswers);
+      void finalize(nextAnswers);
+    },
+    [busy, finalize, questions, responses, showAssistantEn],
+  );
+
   const onSend = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || busy || responses.length >= 5 || questions.length !== 5) {
       return;
     }
+    submitAnswer({ stored: trimmed, display: trimmed });
+  }, [busy, input, questions, responses.length, submitAnswer]);
 
-    const nextAnswers = [...responses, trimmed];
-    setInput("");
-
-    if (nextAnswers.length < 5) {
-      const qi = nextAnswers.length;
-      const q = questions[qi];
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", jp: trimmed },
-        {
-          role: "assistant",
-          jp: q.jp,
-          en: showAssistantEn ? q.en : undefined,
-        },
-      ]);
-      setResponses(nextAnswers);
+  const onSkip = useCallback(() => {
+    if (busy || responses.length >= 5 || questions.length !== 5) {
       return;
     }
-
-    setMessages((prev) => [...prev, { role: "user", jp: trimmed }]);
-    setResponses(nextAnswers);
-    void finalize(nextAnswers);
-  }, [busy, finalize, input, questions, responses.length, showAssistantEn]);
+    submitAnswer({ stored: "", display: "スキップ · Skipped" });
+  }, [busy, questions, responses.length, submitAnswer]);
 
   const missingDeps = draft.level === null || nativeForApi.length === 0 || !levelLabel;
 
@@ -236,7 +257,7 @@ export default function OnboardingAssessmentScreen() {
                   editable={responses.length < 5}
                   multiline
                   textAlignVertical="top"
-                  placeholder="自由記述 · Free response"
+                  placeholder={inputPlaceholder}
                   placeholderTextColor="#a3a3a3"
                   className="mt-3 min-h-[120px] w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-base leading-relaxed text-neutral-900"
                 />
@@ -248,6 +269,17 @@ export default function OnboardingAssessmentScreen() {
                 >
                   <Text className="text-base font-semibold text-white">{responses.length >= 5 ? "送信中..." : "送る"}</Text>
                 </Pressable>
+                {responses.length < 5 ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="スキップ"
+                    disabled={busy}
+                    onPress={onSkip}
+                    className={`mt-3 items-center py-3 ${busy ? "opacity-40" : "active:opacity-80"}`}
+                  >
+                    <Text className="text-sm text-neutral-500">スキップ · Skip</Text>
+                  </Pressable>
+                ) : null}
               </View>
             ) : null}
           </>

@@ -13,7 +13,6 @@ const LEVEL_ROWS: { code: LevelCode; jp: string; en: string }[] = [
   { code: "n4", jp: "N4 相当", en: "Around JLPT N4" },
   { code: "n3", jp: "N3 相当", en: "Around JLPT N3" },
   { code: "n2", jp: "N2 相当", en: "Around JLPT N2" },
-  { code: "n1", jp: "N1 相当", en: "Around JLPT N1" },
 ];
 
 export default function OnboardingLevelScreen() {
@@ -70,6 +69,8 @@ export default function OnboardingLevelScreen() {
             );
           })}
         </View>
+
+        <Text className="mt-4 text-xs leading-relaxed text-neutral-500">N1の方には他のリソースをお勧めします。</Text>
 
         <View className="mt-10 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-5">
           <Text className="text-base font-semibold text-neutral-900">
