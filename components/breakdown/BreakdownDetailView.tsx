@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
 import {
@@ -15,7 +15,9 @@ import type { ElementExplanation } from "@/lib/types/gaps";
 export type BreakdownDetailViewProps = {
   routeId: string | undefined;
   payload: AnalyseResponse | undefined;
+  hydrationDone: boolean;
   onGoHome: () => void;
+  onNavigateToNigate?: () => void;
 };
 
 const Palette = {
@@ -27,7 +29,13 @@ const Palette = {
   indigo800: "#3730a3",
 };
 
-export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDetailViewProps) {
+export function BreakdownDetailView({
+  routeId,
+  payload,
+  hydrationDone,
+  onGoHome,
+  onNavigateToNigate,
+}: BreakdownDetailViewProps) {
   const id = routeId;
 
   const explainCacheRef = useRef(new Map<string, ElementExplanation>());
@@ -165,7 +173,7 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
           </View>
         ) : null}
 
-        {id && !payload ? (
+        {id && hydrationDone && !payload ? (
           <View style={styles.emptyBlock}>
             <Text style={[styles.emptyMessage, styles.emptyMessageMultiline]}>
               This breakdown isn&apos;t cached anymore — start again from Home.
@@ -175,6 +183,13 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
                 <Text style={styles.homeBtnText}>ホームへ</Text>
               </View>
             </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {id && !hydrationDone ? (
+          <View style={styles.loadingBlock}>
+            <ActivityIndicator accessibilityLabel="読み込み中" />
+            <Text style={styles.loadingCaption}>読み込み中…</Text>
           </View>
         ) : null}
 
@@ -216,6 +231,7 @@ export function BreakdownDetailView({ routeId, payload, onGoHome }: BreakdownDet
         flagBusy={flagBusy}
         flagError={flagError}
         gapSaved={gapSaved}
+        onNavigateToNigate={onNavigateToNigate}
       />
     </ScrollView>
   );
@@ -256,6 +272,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: Palette.indigo800,
+  },
+  loadingBlock: {
+    alignItems: "center",
+    paddingVertical: 48,
+  },
+  loadingCaption: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Palette.neutral400,
   },
   header: {
     marginBottom: 16,

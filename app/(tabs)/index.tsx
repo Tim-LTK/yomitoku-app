@@ -16,6 +16,7 @@ import { postAnalyse } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { createBreakdownRouteId } from "@/lib/breakdown/routeId";
 import { storeAnalyseResult } from "@/lib/breakdown/routePayload";
+import { saveBreakdown } from "@/lib/storage/breakdowns";
 
 export default function HomeScreen() {
   const [japaneseInput, setJapaneseInput] = useState("");
@@ -38,6 +39,7 @@ export default function HomeScreen() {
       const routeId = createBreakdownRouteId();
       const result = await postAnalyse({ text });
       storeAnalyseResult(routeId, result);
+      void saveBreakdown(routeId, result);
       router.push(`/breakdown/${routeId}`);
     } catch (err) {
       if (err instanceof AnalyseClientError) {

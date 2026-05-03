@@ -15,6 +15,7 @@ export type ElementExplanationSheetProps = {
   flagBusy: boolean;
   flagError: string | null;
   gapSaved: boolean;
+  onNavigateToNigate?: () => void;
 };
 
 export function ElementExplanationSheet({
@@ -29,6 +30,7 @@ export function ElementExplanationSheet({
   flagBusy,
   flagError,
   gapSaved,
+  onNavigateToNigate,
 }: ElementExplanationSheetProps) {
   const headline = explanation?.headline ?? "";
   const detail = explanation?.detail ?? "";
@@ -147,6 +149,15 @@ export function ElementExplanationSheet({
                   <Text className="text-base font-semibold text-white">苦手に追加</Text>
                 )}
               </Pressable>
+              {gapSaved && onNavigateToNigate ? (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => onNavigateToNigate()}
+                  className="mt-4 items-center py-2 active:opacity-80"
+                >
+                  <Text className="text-base font-semibold text-indigo-700">苦手タブへ →</Text>
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
         </View>
