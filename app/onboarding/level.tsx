@@ -1,0 +1,131 @@
+import { router } from "expo-router";
+import { useCallback } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { buildSelfReportedLevelLabel, useOnboardingDraft } from "@/app/onboarding/context";
+import type { LevelCode } from "@/lib/onboarding/levelCodes";
+
+const LEVEL_ROWS: { code: LevelCode; jp: string; en: string }[] = [
+  { code: "complete_beginner", jp: "初めて（完全な初心者）", en: "Complete beginner" },
+  { code: "n5", jp: "N5 相当", en: "Around JLPT N5" },
+  { code: "n4", jp: "N4 相当", en: "Around JLPT N4" },
+  { code: "n3", jp: "N3 相当", en: "Around JLPT N3" },
+  { code: "n2", jp: "N2 相当", en: "Around JLPT N2" },
+  { code: "n1", jp: "N1 相当", en: "Around JLPT N1" },
+];
+
+export default function OnboardingLevelScreen() {
+  const insets = useSafeAreaInsets();
+  const { level, setLevel, studyingTowardNext, setStudyingTowardNext } = useOnboardingDraft();
+
+  const canContinue = Boolean(level !== null && studyingTowardNext !== null);
+  const labelPreview =
+    level && studyingTowardNext !== null
+      ? buildSelfReportedLevelLabel(level, studyingTowardNext)
+      : "";
+
+  const selectLevel = useCallback(
+    (code: LevelCode) => {
+      setLevel(code);
+    },
+    [setLevel],
+  );
+
+  return (
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 160 }}>
+        <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">ステップ 2 / 4</Text>
+        <Text className="mt-4 text-2xl font-semibold leading-snug text-neutral-900">あなたの日本語レベルはどれに近いですか？</Text>
+        <Text className="mt-2 text-base text-neutral-500">Pick the band that best matches you today.</Text>
+
+        <View className="mt-8 gap-3">
+          {LEVEL_ROWS.map((row) => {
+            const sel = level === row.code;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: sel }}
+                key={row.code}
+                onPress={() => selectLevel(row.code)}
+                className={`rounded-2xl border px-4 py-4 active:opacity-90 ${
+                  sel ? "border-indigo-600 bg-indigo-50" : "border-neutral-200 bg-white"
+                }`}
+              >
+                <Text className={`text-lg font-semibold ${sel ? "text-indigo-950" : "text-neutral-900"}`}>{row.jp}</Text>
+                <Text className="mt-2 text-xs text-neutral-500">{row.en}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View className="mt-10 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-5">
+          <Text className="text-base font-semibold text-neutral-900">
+            現在、次のレベルに向けて勉強していますか？
+          </Text>
+          <Text className="mt-2 text-xs text-neutral-500">Are you currently studying toward the next level?</Text>
+          <View className="mt-4 flex-row gap-3">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: studyingTowardNext === true }}
+              onPress={() => setStudyingTowardNext(true)}
+              className={`flex-1 items-center rounded-xl border py-3 ${
+                studyingTowardNext === true ? "border-indigo-600 bg-indigo-600" : "border-neutral-300 bg-white"
+              }`}
+            >
+              <Text
+                className={`text-sm font-semibold ${studyingTowardNext === true ? "text-white" : "text-neutral-900"}`}
+              >
+                はい
+              </Text>
+              <Text
+                className={`mt-0.5 text-[10px] ${studyingTowardNext === true ? "text-indigo-100" : "text-neutral-400"}`}
+              >
+                Yes
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: studyingTowardNext === false }}
+              onPress={() => setStudyingTowardNext(false)}
+              className={`flex-1 items-center rounded-xl border py-3 ${
+                studyingTowardNext === false ? "border-indigo-600 bg-indigo-600" : "border-neutral-300 bg-white"
+              }`}
+            >
+              <Text
+                className={`text-sm font-semibold ${studyingTowardNext === false ? "text-white" : "text-neutral-900"}`}
+              >
+                いいえ
+              </Text>
+              <Text
+                className={`mt-0.5 text-[10px] ${studyingTowardNext === false ? "text-indigo-100" : "text-neutral-400"}`}
+              >
+                No
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+        {labelPreview ? (
+          <Text className="mt-6 rounded-lg bg-neutral-100 px-3 py-2 text-xs text-neutral-600" selectable>
+            送信文言プレビュー · {labelPreview}
+          </Text>
+        ) : null}
+      </ScrollView>
+
+      <View
+        style={{ paddingBottom: Math.max(insets.bottom + 16, 24), paddingHorizontal: 24 }}
+        className="absolute bottom-0 left-0 right-0 border-t border-neutral-200 bg-white pt-4"
+      >
+        <Pressable
+          accessibilityRole="button"
+          disabled={!canContinue}
+          onPress={() => router.push("/onboarding/assessment")}
+          className={`items-center rounded-2xl py-4 ${canContinue ? "bg-indigo-600 active:opacity-90" : "bg-neutral-300"}`}
+        >
+          <Text className="text-base font-semibold text-white">次へ</Text>
+          <Text className="mt-1 text-xs text-white/90">Continue</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}

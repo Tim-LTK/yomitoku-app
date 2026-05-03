@@ -2,6 +2,10 @@
 
 export const ANALYSE_PATH = "/analyse" as const;
 
+/** Phase 1.6 — onboarding placement → `StudentProfile`. */
+
+export const ONBOARD_ASSESS_PATH = "/onboard/assess" as const;
+
 /** FastAPI `POST /extract` — vision OCR / handwriting to plain Japanese (separate from `/analyse`). */
 
 export const EXTRACT_PATH = "/extract" as const;

@@ -6,10 +6,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { Stack } from "expo-router";
+import { Stack, router, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+
+import { loadProfile } from "@/lib/storage/profile";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -18,12 +20,40 @@ export default function RootLayout() {
     ...Ionicons.font,
   });
 
+  const pathname = usePathname();
+  const [profileGateReady, setProfileGateReady] = useState(false);
+
   useEffect(() => {
     if (!fontsLoaded && !fontError) {
       return;
     }
     void SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    if (!fontsLoaded && !fontError) {
+      return;
+    }
+
+    let cancelled = false;
+    void loadProfile().then((profile) => {
+      if (cancelled) {
+        return;
+      }
+      if (
+        !profile &&
+        typeof pathname === "string" &&
+        !pathname.includes("onboarding")
+      ) {
+        router.replace("/onboarding");
+      }
+      setProfileGateReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fontsLoaded, fontError, pathname]);
 
   if (fontError != null) {
     throw fontError;
@@ -33,11 +63,16 @@ export default function RootLayout() {
     return null;
   }
 
+  if (!profileGateReady) {
+    return null;
+  }
+
   return (
     <GluestackUIProvider mode="light">
       <SafeAreaProvider>
         <StatusBar style="auto" />
         <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="breakdown/[id]"

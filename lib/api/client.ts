@@ -4,11 +4,14 @@ import {
   ANALYSE_PATH,
   EXPLAIN_PATH,
   EXTRACT_PATH,
+  ONBOARD_ASSESS_PATH,
   PRACTICE_EVALUATE_PATH,
   PRACTICE_GENERATE_PATH,
   SRS_COMPUTE_PATH,
 } from "@/lib/api/constants";
 import { AnalyseClientError } from "@/lib/api/errors";
+import { buildStudentContext } from "@/lib/profile/buildStudentContext";
+import { loadProfile } from "@/lib/storage/profile";
 import {
   type AnalyseResponse,
   type BreakdownElement,
@@ -28,8 +31,21 @@ import {
   type PracticeResult,
 } from "@/lib/types/practice";
 import { safeParseSrsComputeResponse } from "@/lib/types/srs";
+import { safeParseStudentProfile, type StudentProfile } from "@/lib/types/profile";
 
 const ENV_KEYS = ["EXPO_PUBLIC_API_URL"] as const;
+
+async function withOptionalStudentContext<T extends Record<string, unknown>>(body: T): Promise<T> {
+  try {
+    const profile = await loadProfile();
+    if (!profile) {
+      return body;
+    }
+    return { ...body, studentContext: buildStudentContext(profile) };
+  } catch {
+    return body;
+  }
+}
 
 function readExpoPublicApiUrl(): string {
   const fromProcess = process.env.EXPO_PUBLIC_API_URL;
@@ -74,6 +90,10 @@ function buildExplainUrl(baseUrl: string): string {
 
 function buildSrsComputeUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${SRS_COMPUTE_PATH}`;
+}
+
+function buildOnboardAssessUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${ONBOARD_ASSESS_PATH}`;
 }
 
 export function guardApiBase(): string {
@@ -199,7 +219,7 @@ function messageFromHttpPayload(status: number, payload: unknown): string {
 export async function postAnalyse(payload: { text: string }): Promise<AnalyseResponse> {
   const base = guardApiBase();
   const url = buildAnalyseUrl(base);
-  const body = { text: payload.text.trim() };
+  const body = await withOptionalStudentContext({ text: payload.text.trim() });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -241,10 +261,10 @@ export async function postExtract(payload: {
 }): Promise<string> {
   const base = guardApiBase();
   const url = buildExtractUrl(base);
-  const body = {
+  const body = await withOptionalStudentContext({
     imageBase64: payload.imageBase64.trim(),
     mimeType: normalizeExtractMimeType(payload.mimeType),
-  };
+  });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -272,7 +292,7 @@ export async function postPracticeGenerate(payload: {
 }): Promise<PracticeItem[]> {
   const base = guardApiBase();
   const url = buildPracticeGenerateUrl(base);
-  const body = { sentenceBreakdown: payload.sentenceBreakdown };
+  const body = await withOptionalStudentContext({ sentenceBreakdown: payload.sentenceBreakdown });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -302,11 +322,11 @@ export async function postPracticeEvaluate(payload: {
 }): Promise<PracticeResult> {
   const base = guardApiBase();
   const url = buildPracticeEvaluateUrl(base);
-  const body = {
+  const body = await withOptionalStudentContext({
     sentenceBreakdown: payload.sentenceBreakdown,
     practiceItem: payload.practiceItem,
     userAnswer: payload.userAnswer.trim(),
-  };
+  });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -335,10 +355,10 @@ export async function postExplain(payload: {
 }): Promise<ElementExplanation> {
   const base = guardApiBase();
   const url = buildExplainUrl(base);
-  const body = {
+  const body = await withOptionalStudentContext({
     breakdownElement: payload.breakdownElement,
     sourceSentence: payload.sourceSentence.trim(),
-  };
+  });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -367,10 +387,10 @@ export async function postSrsCompute(payload: {
 }): Promise<{ suggestedIntervalDays: number; nextReviewAt: string; reasoning: string }> {
   const base = guardApiBase();
   const url = buildSrsComputeUrl(base);
-  const body = {
+  const body = await withOptionalStudentContext({
     gap: payload.gap,
     results: payload.practiceResults,
-  };
+  });
   const { res, json } = await postJson(url, body);
 
   if (!res.ok) {
@@ -382,6 +402,40 @@ export async function postSrsCompute(payload: {
   if (!parsed.success) {
     throw new AnalyseClientError(
       "SRS compute response did not match expected shape.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data;
+}
+
+/**
+ * POST /onboard/assess — first-run placement before a profile exists (no studentContext attached).
+ */
+export async function postOnboardAssess(payload: {
+  nativeLanguages: string[];
+  selfReportedLevel: string;
+  answers: { q1: string; q2: string; q3: string; q4: string; q5: string };
+}): Promise<StudentProfile> {
+  const base = guardApiBase();
+  const url = buildOnboardAssessUrl(base);
+  const body = {
+    nativeLanguages: payload.nativeLanguages,
+    selfReportedLevel: payload.selfReportedLevel.trim(),
+    answers: payload.answers,
+  };
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseStudentProfile(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "Onboard assess response did not match StudentProfile shape.",
       "response_shape",
       { zodError: parsed.error, statusCode: res.status },
     );
