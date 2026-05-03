@@ -9,6 +9,7 @@ import {
 import { postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { appendKnowledgeGap, buildKnowledgeGap } from "@/lib/storage/gaps";
+import { cloudSaveGap } from "@/lib/storage/supabaseGaps";
 import { loadAllExplainResultsForBreakdown, saveExplainResult } from "@/lib/storage/breakdowns";
 import type { AnalyseResponse, BreakdownElement } from "@/lib/types/breakdown";
 import type { ElementExplanation } from "@/lib/types/gaps";
@@ -145,15 +146,15 @@ export function BreakdownDetailView({
     setFlagBusy(true);
     setFlagError(null);
     try {
-      await appendKnowledgeGap(
-        buildKnowledgeGap({
-          breakdownRouteId: id,
-          sentenceIndex: sentenceOrdinal,
-          sourceSentence: sentenceText,
-          element: sheetElement,
-          explanationSnapshot: explanation,
-        }),
-      );
+      const flagged = buildKnowledgeGap({
+        breakdownRouteId: id,
+        sentenceIndex: sentenceOrdinal,
+        sourceSentence: sentenceText,
+        element: sheetElement,
+        explanationSnapshot: explanation,
+      });
+      await appendKnowledgeGap(flagged);
+      void cloudSaveGap(flagged).catch(() => {});
       setGapSaved(true);
     } catch (err) {
       const message =

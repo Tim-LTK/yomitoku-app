@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
 import { formatGrammarRoleLabel } from "@/lib/breakdown/formatRole";
-import { deleteKnowledgeGap, loadKnowledgeGaps } from "@/lib/storage/gaps";
+import { cloudDeleteGap, cloudLoadGaps } from "@/lib/storage/supabaseGaps";
 import { getRoleColour } from "@/lib/ui/roleColours";
 import type { KnowledgeGap } from "@/lib/types/gaps";
 
@@ -23,8 +23,12 @@ export default function NigateListScreen() {
 
   const refresh = useCallback(() => {
     void (async () => {
-      const next = await loadKnowledgeGaps();
-      setItems(next);
+      try {
+        const next = await cloudLoadGaps();
+        setItems(next);
+      } catch {
+        setItems([]);
+      }
     })();
   }, []);
 
@@ -76,7 +80,7 @@ export default function NigateListScreen() {
           accessibilityLabel="Delete gap"
           onPress={() =>
             void (async () => {
-              await deleteKnowledgeGap(item.id);
+              await cloudDeleteGap(item.id);
               refresh();
             })()
           }

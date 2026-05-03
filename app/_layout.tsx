@@ -1,5 +1,7 @@
 import "../global.css";
 
+import "@/lib/supabase";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useFonts } from "expo-font";

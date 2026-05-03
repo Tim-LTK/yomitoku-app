@@ -66,7 +66,7 @@ function buildExplainUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${EXPLAIN_PATH}`;
 }
 
-function guardApiBase(): string {
+export function guardApiBase(): string {
   const base = readExpoPublicApiUrl();
   if (!base) {
     throw new AnalyseClientError(

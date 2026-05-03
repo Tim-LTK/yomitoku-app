@@ -17,3 +17,9 @@ export const PRACTICE_EVALUATE_PATH = "/practice/evaluate" as const;
 /** Phase 1.5 — targeted tutor explanation for one `BreakdownElement`. */
 
 export const EXPLAIN_PATH = "/explain" as const;
+
+/** Phase 3 — FastAPI SRS gap routes (clients call REST, not Postgres). */
+
+export const SRS_GAPS_PATH = "/srs/gaps" as const;
+
+export const srsGapPath = (id: string) => `${SRS_GAPS_PATH}/${encodeURIComponent(id)}` as const;
