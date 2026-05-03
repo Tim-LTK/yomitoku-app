@@ -204,14 +204,16 @@ export default function OnboardingAssessmentScreen() {
 
   const minimalDevAssessmentUi = __DEV__ && draft.devAssessmentAutoFillRequested && !missingDeps;
 
+  const keyboardVerticalOffset = insets.top + 44;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior="padding"
-      keyboardVerticalOffset={88}
+      keyboardVerticalOffset={keyboardVerticalOffset}
       className="flex-1 bg-neutral-50"
     >
-      <View className="flex-1 bg-neutral-50" style={{ paddingTop: insets.top }}>
+      <View style={{ flex: 1, paddingTop: insets.top }} className="bg-neutral-50">
         <View className="border-b border-neutral-200 px-6 pb-4 pt-2">
           <Pressable
             accessibilityRole="button"
@@ -233,7 +235,7 @@ export default function OnboardingAssessmentScreen() {
         </View>
 
         {missingDeps ? (
-          <View className="flex-1 items-center px-10 pt-24">
+          <View style={{ flex: 1 }} className="items-center px-10 pt-24">
             <Text className="text-center text-sm text-neutral-600">入力が足りません。</Text>
             <Pressable
               className="mt-6 rounded-xl bg-neutral-900 px-6 py-3"
@@ -244,7 +246,7 @@ export default function OnboardingAssessmentScreen() {
             </Pressable>
           </View>
         ) : minimalDevAssessmentUi ? (
-          <View className="flex-1 items-center justify-center gap-6 px-8 pb-24">
+          <View style={{ flex: 1 }} className="items-center justify-center gap-6 px-8 pb-24">
             {error ? (
               <>
                 <Text className="text-center text-sm text-red-900">{error}</Text>
