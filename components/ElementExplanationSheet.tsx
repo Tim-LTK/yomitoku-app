@@ -1,4 +1,4 @@
-import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, InteractionManager, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 import type { BreakdownElement } from "@/lib/types/breakdown";
 import type { ElementExplanation } from "@/lib/types/gaps";
@@ -152,7 +152,12 @@ export function ElementExplanationSheet({
               {gapSaved && onNavigateToNigate ? (
                 <Pressable
                   accessibilityRole="link"
-                  onPress={() => onNavigateToNigate()}
+                  onPress={() => {
+                    onDismiss();
+                    InteractionManager.runAfterInteractions(() => {
+                      onNavigateToNigate();
+                    });
+                  }}
                   className="mt-4 items-center py-2 active:opacity-80"
                 >
                   <Text className="text-base font-semibold text-indigo-700">苦手タブへ →</Text>

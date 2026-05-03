@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
@@ -9,6 +9,7 @@ import {
 import { postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { appendKnowledgeGap, buildKnowledgeGap } from "@/lib/storage/gaps";
+import { loadAllExplainResultsForBreakdown, saveExplainResult } from "@/lib/storage/breakdowns";
 import type { AnalyseResponse, BreakdownElement } from "@/lib/types/breakdown";
 import type { ElementExplanation } from "@/lib/types/gaps";
 
@@ -41,6 +42,25 @@ export function BreakdownDetailView({
   const explainCacheRef = useRef(new Map<string, ElementExplanation>());
   const [isMemoOpen, setIsMemoOpen] = useState(false);
   const [isNuanceOpen, setIsNuanceOpen] = useState(false);
+
+  useEffect(() => {
+    explainCacheRef.current.clear();
+    if (!routeId) {
+      return;
+    }
+    let cancelled = false;
+    void loadAllExplainResultsForBreakdown(routeId).then((persisted) => {
+      if (cancelled) {
+        return;
+      }
+      persisted.forEach((value, cacheKeyRow) => {
+        explainCacheRef.current.set(cacheKeyRow, value);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [routeId]);
 
   const [expandedElement, setExpandedElement] = useState<ExpandedElementKey>(null);
 
@@ -100,6 +120,9 @@ export function BreakdownDetailView({
         });
         explainCacheRef.current.set(cacheKey, body);
         setExplanation(body);
+        if (id) {
+          void saveExplainResult(id, cacheKey, body);
+        }
       } catch (err) {
         if (err instanceof AnalyseClientError) {
           setSheetError(err.message);
@@ -112,7 +135,7 @@ export function BreakdownDetailView({
         setSheetLoading(false);
       }
     },
-    [],
+    [id],
   );
 
   const handleFlagGap = useCallback(async () => {
