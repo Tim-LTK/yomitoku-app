@@ -34,6 +34,9 @@ export const knowledgeGapSchema = z.object({
   sourceSentence: z.string().min(1),
   element: breakdownElementSchema,
   explanationSnapshot: elementExplanationSchema,
+  /** Persisted overlay (local AsyncStorage merges from cloud gaps until API stores these fields). */
+  nextReviewAt: z.string().min(1).nullable().optional(),
+  intervalDays: z.number().int().min(1).max(366).nullable().optional(),
 });
 
 export type KnowledgeGap = z.infer<typeof knowledgeGapSchema>;

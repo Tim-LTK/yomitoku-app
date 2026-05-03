@@ -1,7 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   Text,
@@ -12,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
 import { formatGrammarRoleLabel } from "@/lib/breakdown/formatRole";
+import { isKnowledgeGapDue, mergeKnowledgeGapsWithLocalSchedule } from "@/lib/storage/gapSrsSchedule";
 import { cloudDeleteGap, cloudLoadGaps } from "@/lib/storage/supabaseGaps";
 import { getRoleColour } from "@/lib/ui/roleColours";
 import type { KnowledgeGap } from "@/lib/types/gaps";
@@ -19,12 +22,14 @@ import type { KnowledgeGap } from "@/lib/types/gaps";
 export default function NigateListScreen() {
   const [items, setItems] = useState<KnowledgeGap[]>([]);
   const [explainGap, setExplainGap] = useState<KnowledgeGap | null>(null);
+  const [practiceBusy, setPracticeBusy] = useState(false);
   const insets = useSafeAreaInsets();
 
   const refresh = useCallback(() => {
     void (async () => {
       try {
-        const next = await cloudLoadGaps();
+        const remote = await cloudLoadGaps();
+        const next = await mergeKnowledgeGapsWithLocalSchedule(remote);
         setItems(next);
       } catch {
         setItems([]);
@@ -39,6 +44,29 @@ export default function NigateListScreen() {
   );
 
   const noopFlagGap = useCallback(async () => {}, []);
+
+  const handleStartPractice = useCallback(() => {
+    void (async () => {
+      setPracticeBusy(true);
+      try {
+        const remote = await cloudLoadGaps();
+        const merged = await mergeKnowledgeGapsWithLocalSchedule(remote);
+        const due = merged.filter((g) => isKnowledgeGapDue(g, Date.now()));
+        if (due.length === 0) {
+          Alert.alert("", "復習する項目がありません");
+          return;
+        }
+        const ids = due.map((g) => g.id).join(",");
+        router.push({ pathname: "/practice/nigate", params: { ids } });
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "苦手リストを読み込めませんでした。ネットワークを確認してください。";
+        Alert.alert("エラー", msg);
+      } finally {
+        setPracticeBusy(false);
+      }
+    })();
+  }, []);
 
   const renderItem = useCallback(({ item }: { item: KnowledgeGap }) => {
     const colours = getRoleColour(item.element.role);
@@ -122,11 +150,20 @@ export default function NigateListScreen() {
       >
         <Pressable
           accessibilityRole="button"
-          disabled
-          className="w-full items-center rounded-xl bg-neutral-200 py-4"
+          disabled={practiceBusy}
+          onPress={handleStartPractice}
+          className={`w-full items-center rounded-xl py-4 ${
+            practiceBusy ? "bg-indigo-300" : "bg-indigo-600 active:opacity-90"
+          }`}
         >
-          <Text className="text-base font-semibold text-neutral-500">練習する</Text>
-          <Text className="mt-1 text-xs text-neutral-400">近日公開</Text>
+          {practiceBusy ? (
+            <ActivityIndicator accessibilityLabel="練習を準備中" color="#ffffff" />
+          ) : (
+            <Text className="text-base font-semibold text-white">練習する</Text>
+          )}
+          {!practiceBusy ? (
+            <Text className="mt-1 text-xs text-indigo-100">復習が必要な苦手項目をまとめて練習</Text>
+          ) : null}
         </Pressable>
       </View>
 

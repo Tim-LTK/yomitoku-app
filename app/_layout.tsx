@@ -55,6 +55,14 @@ export default function RootLayout() {
               headerBackTitle: "戻る",
             }}
           />
+          <Stack.Screen
+            name="practice/nigate"
+            options={{
+              headerShown: true,
+              title: "練習",
+              headerBackTitle: "戻る",
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GluestackUIProvider>

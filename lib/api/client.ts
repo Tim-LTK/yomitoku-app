@@ -6,6 +6,7 @@ import {
   EXTRACT_PATH,
   PRACTICE_EVALUATE_PATH,
   PRACTICE_GENERATE_PATH,
+  SRS_COMPUTE_PATH,
 } from "@/lib/api/constants";
 import { AnalyseClientError } from "@/lib/api/errors";
 import {
@@ -15,13 +16,18 @@ import {
   safeParseAnalyseResponse,
 } from "@/lib/types/breakdown";
 import { safeParseExtractResponse } from "@/lib/types/extract";
-import { safeParseExplainResponse, type ElementExplanation } from "@/lib/types/gaps";
+import {
+  safeParseExplainResponse,
+  type ElementExplanation,
+  type KnowledgeGap,
+} from "@/lib/types/gaps";
 import {
   safeParsePracticeEvaluatePayload,
   safeParsePracticeGeneratePayload,
   type PracticeItem,
   type PracticeResult,
 } from "@/lib/types/practice";
+import { safeParseSrsComputeResponse } from "@/lib/types/srs";
 
 const ENV_KEYS = ["EXPO_PUBLIC_API_URL"] as const;
 
@@ -64,6 +70,10 @@ function buildPracticeEvaluateUrl(baseUrl: string): string {
 
 function buildExplainUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${EXPLAIN_PATH}`;
+}
+
+function buildSrsComputeUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${SRS_COMPUTE_PATH}`;
 }
 
 export function guardApiBase(): string {
@@ -346,4 +356,36 @@ export async function postExplain(payload: {
   }
 
   return parsed.data.explanation;
+}
+
+/**
+ * POST /srs/compute — spacing hint from chronological practice results for one gap snapshot.
+ */
+export async function postSrsCompute(payload: {
+  gap: KnowledgeGap;
+  practiceResults: PracticeResult[];
+}): Promise<{ suggestedIntervalDays: number; nextReviewAt: string; reasoning: string }> {
+  const base = guardApiBase();
+  const url = buildSrsComputeUrl(base);
+  const body = {
+    gap: payload.gap,
+    results: payload.practiceResults,
+  };
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseSrsComputeResponse(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "SRS compute response did not match expected shape.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data;
 }

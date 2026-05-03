@@ -23,3 +23,7 @@ export const EXPLAIN_PATH = "/explain" as const;
 export const SRS_GAPS_PATH = "/srs/gaps" as const;
 
 export const srsGapPath = (id: string) => `${SRS_GAPS_PATH}/${encodeURIComponent(id)}` as const;
+
+/** SRS spacing hint from Claude (Phase 3). */
+
+export const SRS_COMPUTE_PATH = "/srs/compute" as const;
