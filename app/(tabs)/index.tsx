@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,16 +16,41 @@ import { postAnalyse } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { createBreakdownRouteId } from "@/lib/breakdown/routeId";
 import { storeAnalyseResult } from "@/lib/breakdown/routePayload";
-import { saveBreakdown } from "@/lib/storage/breakdowns";
+import {
+  listRecentBreakdowns,
+  loadBreakdown,
+  saveBreakdown,
+  type RecentBreakdownEntry,
+} from "@/lib/storage/breakdowns";
 
 export default function HomeScreen() {
   const [japaneseInput, setJapaneseInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [recent, setRecent] = useState<RecentBreakdownEntry[]>([]);
+
+  const refreshRecent = useCallback(() => {
+    void listRecentBreakdowns().then(setRecent);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshRecent();
+    }, [refreshRecent]),
+  );
 
   const trimmedInput = japaneseInput.trim();
 
   const isSubmitDisabled = useMemo(() => trimmedInput.length === 0 || isSubmitting, [trimmedInput, isSubmitting]);
+
+  const handleOpenRecent = useCallback(async (entry: RecentBreakdownEntry) => {
+    const payload = await loadBreakdown(entry.id);
+    if (!payload) {
+      return;
+    }
+    storeAnalyseResult(entry.id, payload);
+    router.push(`/breakdown/${entry.id}`);
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     const text = japaneseInput.trim();
@@ -39,7 +64,7 @@ export default function HomeScreen() {
       const routeId = createBreakdownRouteId();
       const result = await postAnalyse({ text });
       storeAnalyseResult(routeId, result);
-      void saveBreakdown(routeId, result);
+      await saveBreakdown(routeId, result);
       router.push(`/breakdown/${routeId}`);
     } catch (err) {
       if (err instanceof AnalyseClientError) {
@@ -110,6 +135,33 @@ export default function HomeScreen() {
         {errorMessage ? (
           <View className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-3" accessibilityRole="alert">
             <Text className="text-sm leading-snug text-red-900">{errorMessage}</Text>
+          </View>
+        ) : null}
+
+        {recent.length > 0 ? (
+          <View className="mt-8 pb-6">
+            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">最近の分析</Text>
+            <View className="mt-2">
+              {recent.map((entry) => {
+                const d = new Date(entry.analysedAt);
+                const when = Number.isFinite(d.valueOf())
+                  ? d.toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short" })
+                  : entry.analysedAt;
+                return (
+                <Pressable
+                  key={entry.id}
+                  accessibilityRole="button"
+                  onPress={() => void handleOpenRecent(entry)}
+                  className="mb-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 active:bg-neutral-100"
+                >
+                  <Text className="text-sm leading-snug text-neutral-900" numberOfLines={2}>
+                    {entry.preview.length > 0 ? entry.preview : "—"}
+                  </Text>
+                  <Text className="mt-1 text-[11px] text-neutral-400">{when}</Text>
+                </Pressable>
+              );
+              })}
+            </View>
           </View>
         ) : null}
       </ScrollView>
