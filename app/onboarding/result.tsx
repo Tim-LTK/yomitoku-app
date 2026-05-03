@@ -119,7 +119,13 @@ export default function OnboardingResultScreen() {
         <View className="mt-8 rounded-2xl border border-neutral-200 bg-white px-4 py-4">
           <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">メモ · Notes</Text>
           <Text className="mt-3 text-sm leading-relaxed text-neutral-800">{profile.notes}</Text>
-          <Text className="mt-4 text-[10px] leading-snug text-neutral-400">{profile.updatedAt}</Text>
+          <Text className="mt-4 text-[10px] leading-snug text-neutral-400">
+            {new Date(profile.createdAt).toLocaleDateString("ja-JP", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </Text>
         </View>
       </ScrollView>
 
