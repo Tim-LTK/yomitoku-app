@@ -98,6 +98,14 @@ export default function RootLayout() {
               headerBackTitle: "戻る",
             }}
           />
+          <Stack.Screen
+            name="scan/[id]"
+            options={{
+              headerShown: true,
+              title: "スキャン",
+              headerBackTitle: "戻る",
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GluestackUIProvider>

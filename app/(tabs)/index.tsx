@@ -14,14 +14,13 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { UploadZone } from "@/components/UploadZone";
-import { postAnalyse } from "@/lib/api/client";
+import { postScan } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { createBreakdownRouteId } from "@/lib/breakdown/routeId";
-import { storeAnalyseResult } from "@/lib/breakdown/routePayload";
+import { storeAnalyseResult, storeScanResult } from "@/lib/breakdown/routePayload";
 import {
   listRecentBreakdowns,
   loadBreakdown,
-  saveBreakdown,
   type RecentBreakdownEntry,
 } from "@/lib/storage/breakdowns";
 import { clearProfile } from "@/lib/storage/profile";
@@ -65,17 +64,16 @@ export default function HomeScreen() {
     setIsSubmitting(true);
     try {
       const routeId = createBreakdownRouteId();
-      const result = await postAnalyse({ text });
-      storeAnalyseResult(routeId, result);
-      await saveBreakdown(routeId, result);
-      router.push(`/breakdown/${routeId}`);
+      const result = await postScan({ text });
+      storeScanResult(routeId, result);
+      router.push(`/scan/${routeId}`);
     } catch (err) {
       if (err instanceof AnalyseClientError) {
         setErrorMessage(err.message);
       } else if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage("Something went wrong while analysing — try again.");
+        setErrorMessage("スキャンに失敗しました — もう一度お試しください。");
       }
     } finally {
       setIsSubmitting(false);
@@ -114,7 +112,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text className="pt-6 text-center text-2xl font-semibold text-neutral-900">Yomitoku</Text>
-        <Text className="mt-1 pb-4 text-center text-sm text-neutral-500">読み解く · Phase 1 · Analyse</Text>
+        <Text className="mt-1 pb-4 text-center text-sm text-neutral-500">読み解く · Phase 1.7 · スキャン</Text>
 
         {__DEV__ ? (
           <View className="mb-4 flex-row flex-wrap items-center justify-center gap-3">
@@ -163,7 +161,7 @@ export default function HomeScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityHint="Runs grammar analysis on your sentence"
+          accessibilityHint="Runs targeted scan on your text"
           disabled={isSubmitDisabled}
           onPress={handleSubmit}
           className={`mt-4 w-full items-center justify-center rounded-xl py-4 ${
@@ -173,7 +171,7 @@ export default function HomeScreen() {
           {isSubmitting ? (
             <ActivityIndicator accessibilityLabel="Loading analysis" color="#ffffff" />
           ) : (
-            <Text className="text-base font-semibold text-white">Explain breakdown</Text>
+            <Text className="text-base font-semibold text-white">スキャン</Text>
           )}
         </Pressable>
 

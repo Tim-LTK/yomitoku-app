@@ -22,6 +22,14 @@ export const PRACTICE_EVALUATE_PATH = "/practice/evaluate" as const;
 
 export const EXPLAIN_PATH = "/explain" as const;
 
+/** Phase 1.7 — targeted grammar / vocabulary / expression scan. */
+
+export const SCAN_PATH = "/scan" as const;
+
+/** Phase 1.7 — passage-grounded follow-up Q&A. */
+
+export const ASK_PATH = "/ask" as const;
+
 /** Phase 3 — FastAPI SRS gap routes (clients call REST, not Postgres). */
 
 export const SRS_GAPS_PATH = "/srs/gaps" as const;

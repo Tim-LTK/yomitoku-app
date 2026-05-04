@@ -2,11 +2,13 @@ import Constants from "expo-constants";
 
 import {
   ANALYSE_PATH,
+  ASK_PATH,
   EXPLAIN_PATH,
   EXTRACT_PATH,
   ONBOARD_ASSESS_PATH,
   PRACTICE_EVALUATE_PATH,
   PRACTICE_GENERATE_PATH,
+  SCAN_PATH,
   SRS_COMPUTE_PATH,
 } from "@/lib/api/constants";
 import { AnalyseClientError } from "@/lib/api/errors";
@@ -32,6 +34,12 @@ import {
 } from "@/lib/types/practice";
 import { safeParseSrsComputeResponse } from "@/lib/types/srs";
 import { safeParseStudentProfile, type StudentProfile } from "@/lib/types/profile";
+import {
+  safeParseAskResponse,
+  safeParseScanResult,
+  type AskResponse,
+  type ScanResult,
+} from "@/lib/types/scan";
 
 const ENV_KEYS = ["EXPO_PUBLIC_API_URL"] as const;
 
@@ -94,6 +102,14 @@ function buildSrsComputeUrl(baseUrl: string): string {
 
 function buildOnboardAssessUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${ONBOARD_ASSESS_PATH}`;
+}
+
+function buildScanUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${SCAN_PATH}`;
+}
+
+function buildAskUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${ASK_PATH}`;
 }
 
 export function guardApiBase(): string {
@@ -231,6 +247,64 @@ export async function postAnalyse(payload: { text: string }): Promise<AnalyseRes
   if (!parsed.success) {
     throw new AnalyseClientError(
       "API response did not match the expected breakdown shape. The server may need a fix.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data;
+}
+
+/**
+ * POST /scan — targeted highlights (Phase 1.7), not full morphological breakdown.
+ */
+export async function postScan(payload: { text: string }): Promise<ScanResult> {
+  const base = guardApiBase();
+  const url = buildScanUrl(base);
+  const body = await withOptionalStudentContext({ text: payload.text.trim() });
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseScanResult(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected scan shape. The server may need a fix.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data;
+}
+
+/**
+ * POST /ask — answer a question using the given passage as grounding (Phase 1.7).
+ */
+export async function postAsk(payload: {
+  question: string;
+  passage: string;
+}): Promise<AskResponse> {
+  const base = guardApiBase();
+  const url = buildAskUrl(base);
+  const body = await withOptionalStudentContext({
+    question: payload.question.trim(),
+    passage: payload.passage.trim(),
+  });
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseAskResponse(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected ask shape. The server may need a fix.",
       "response_shape",
       { zodError: parsed.error, statusCode: res.status },
     );

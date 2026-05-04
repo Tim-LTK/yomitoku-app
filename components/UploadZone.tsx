@@ -107,7 +107,7 @@ export function UploadZone({ onExtractedText, disabled = false, onError }: Uploa
     <View className="pb-4">
       <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">From image</Text>
       <Text className="mt-1 pb-3 text-sm leading-snug text-neutral-500">
-        Extract Japanese from a photo, then review the text below before Explain breakdown.
+        Extract Japanese from a photo, then review the text below before スキャン.
       </Text>
       <View className="flex-row gap-3">
         <Pressable
