@@ -191,18 +191,18 @@ export default function HomeScreen() {
                   ? d.toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short" })
                   : entry.analysedAt;
                 return (
-                <Pressable
-                  key={entry.id}
-                  accessibilityRole="button"
-                  onPress={() => void handleOpenRecent(entry)}
-                  className="mb-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 active:bg-neutral-100"
-                >
-                  <Text className="text-sm leading-snug text-neutral-900" numberOfLines={2}>
-                    {entry.preview.length > 0 ? entry.preview : "—"}
-                  </Text>
-                  <Text className="mt-1 text-[11px] text-neutral-400">{when}</Text>
-                </Pressable>
-              );
+                  <Pressable
+                    key={entry.id}
+                    accessibilityRole="button"
+                    onPress={() => void handleOpenRecent(entry)}
+                    className="mb-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 active:bg-neutral-100"
+                  >
+                    <Text className="text-sm leading-snug text-neutral-900" numberOfLines={2}>
+                      {entry.preview.length > 0 ? entry.preview : "—"}
+                    </Text>
+                    <Text className="mt-1 text-[11px] text-neutral-400">{when}</Text>
+                  </Pressable>
+                );
               })}
             </View>
           </View>
