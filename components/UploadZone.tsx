@@ -1,3 +1,4 @@
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { useCallback, useState } from "react";
@@ -14,13 +15,13 @@ export type UploadZoneProps = {
 
 type PickerSource = "camera" | "library";
 
-function normalizeAssetBase64(asset: ImagePicker.ImagePickerAsset): string | null {
-  const raw = asset.base64?.trim();
-  if (!raw) {
+function normalizeBase64Payload(raw: string | null | undefined): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
     return null;
   }
-  const dataUrl = /^data:image\/[^;]+;base64,(.+)$/s.exec(raw);
-  return (dataUrl?.[1] ?? raw).trim();
+  const dataUrl = /^data:image\/[^;]+;base64,(.+)$/s.exec(trimmed);
+  return (dataUrl?.[1] ?? trimmed).trim();
 }
 
 export function UploadZone({ onExtractedText, disabled = false, onError }: UploadZoneProps) {
@@ -50,7 +51,6 @@ export function UploadZone({ onExtractedText, disabled = false, onError }: Uploa
         mediaTypes: ["images"],
         allowsEditing: false,
         quality: 0.8,
-        base64: true,
         exif: false,
       };
       const pick =
@@ -63,7 +63,20 @@ export function UploadZone({ onExtractedText, disabled = false, onError }: Uploa
       }
 
       const asset = pick.assets[0];
-      const imageBase64 = normalizeAssetBase64(asset);
+
+      let manipulated: ImageManipulator.ImageResult;
+      try {
+        manipulated = await ImageManipulator.manipulateAsync(asset.uri, [], {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true,
+        });
+      } catch {
+        onError("Could not prepare the image. Try another photo.");
+        return;
+      }
+
+      const imageBase64 = normalizeBase64Payload(manipulated.base64);
       if (!imageBase64) {
         onError("Could not read the image. Try another photo or lower resolution.");
         return;
