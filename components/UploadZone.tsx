@@ -23,23 +23,6 @@ function normalizeAssetBase64(asset: ImagePicker.ImagePickerAsset): string | nul
   return (dataUrl?.[1] ?? raw).trim();
 }
 
-function mimeTypeForAsset(asset: ImagePicker.ImagePickerAsset): string {
-  if (asset.mimeType && asset.mimeType.length > 0) {
-    return asset.mimeType;
-  }
-  const uri = asset.uri.toLowerCase();
-  if (uri.endsWith(".png")) {
-    return "image/png";
-  }
-  if (uri.endsWith(".gif")) {
-    return "image/gif";
-  }
-  if (uri.endsWith(".webp")) {
-    return "image/webp";
-  }
-  return "image/jpeg";
-}
-
 export function UploadZone({ onExtractedText, disabled = false, onError }: UploadZoneProps) {
   const [isExtracting, setIsExtracting] = useState(false);
 
@@ -65,8 +48,10 @@ export function UploadZone({ onExtractedText, disabled = false, onError }: Uploa
 
       const options: ImagePicker.ImagePickerOptions = {
         mediaTypes: ["images"],
-        quality: 0.85,
+        allowsEditing: false,
+        quality: 0.8,
         base64: true,
+        exif: false,
       };
       const pick =
         source === "camera"
@@ -86,8 +71,7 @@ export function UploadZone({ onExtractedText, disabled = false, onError }: Uploa
 
       setIsExtracting(true);
       try {
-        const mimeType = mimeTypeForAsset(asset);
-        const text = await postExtract({ imageBase64, mimeType });
+        const text = await postExtract({ imageBase64, mimeType: "image/jpeg" });
         onExtractedText(text.trim());
       } catch (err) {
         if (err instanceof AnalyseClientError) {
