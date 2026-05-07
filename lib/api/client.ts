@@ -6,8 +6,8 @@ import {
   EXPLAIN_PATH,
   EXTRACT_PATH,
   ONBOARD_ASSESS_PATH,
-  PRACTICE_EVALUATE_PATH,
   PRACTICE_GENERATE_PATH,
+  PRACTICE_SUBMIT_PATH,
   SCAN_PATH,
   SRS_COMPUTE_PATH,
 } from "@/lib/api/constants";
@@ -17,7 +17,6 @@ import { loadProfile } from "@/lib/storage/profile";
 import {
   type AnalyseResponse,
   type BreakdownElement,
-  type SentenceBreakdown,
   safeParseAnalyseResponse,
 } from "@/lib/types/breakdown";
 import { safeParseExtractResponse } from "@/lib/types/extract";
@@ -27,10 +26,12 @@ import {
   type KnowledgeGap,
 } from "@/lib/types/gaps";
 import {
-  safeParsePracticeEvaluatePayload,
-  safeParsePracticeGeneratePayload,
+  safeParsePracticeGenerateItems,
+  safeParseSessionResult,
   type PracticeItem,
   type PracticeResult,
+  type SessionResult,
+  type SessionSubmission,
 } from "@/lib/types/practice";
 import { safeParseSrsComputeResponse } from "@/lib/types/srs";
 import { safeParseStudentProfile, type StudentProfile } from "@/lib/types/profile";
@@ -88,8 +89,8 @@ function buildPracticeGenerateUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}${PRACTICE_GENERATE_PATH}`;
 }
 
-function buildPracticeEvaluateUrl(baseUrl: string): string {
-  return `${normalizeBaseUrl(baseUrl)}${PRACTICE_EVALUATE_PATH}`;
+function buildPracticeSubmitUrl(baseUrl: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${PRACTICE_SUBMIT_PATH}`;
 }
 
 function buildExplainUrl(baseUrl: string): string {
@@ -230,6 +231,34 @@ function messageFromHttpPayload(status: number, payload: unknown): string {
 }
 
 /**
+ * GET JSON from the API root — paths must start with `/` (e.g. `/jmdict/lookup?term=…`).
+ */
+export async function apiClient<T>(path: string): Promise<T> {
+  const base = guardApiBase();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${normalizeBaseUrl(base)}${normalizedPath}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+  } catch (cause) {
+    throw new AnalyseClientError(
+      "Network request failed. Confirm the device can reach your API URL and that the server is running.",
+      "network",
+      { cause },
+    );
+  }
+  const json = await readJsonFromResponse(res);
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+  return json as T;
+}
+
+/**
  * POST /analyse — server-side AI only; this wrapper never touches Anthropic keys.
  */
 export async function postAnalyse(payload: { text: string }): Promise<AnalyseResponse> {
@@ -359,47 +388,13 @@ export async function postExtract(payload: {
 }
 
 /**
- * POST /practice/generate — drills from one analysed sentence breakdown (Phase 2).
+ * POST /practice/generate — server composes a session (`KnowledgeGap[]` → PracticeItem[]).
  */
-export async function postPracticeGenerate(payload: {
-  sentenceBreakdown: SentenceBreakdown;
-}): Promise<PracticeItem[]> {
+export async function postPracticeGenerate(payload: { gaps: KnowledgeGap[] }): Promise<PracticeItem[]> {
   const base = guardApiBase();
   const url = buildPracticeGenerateUrl(base);
-  const body = await withOptionalStudentContext({ sentenceBreakdown: payload.sentenceBreakdown });
-  const { res, json } = await postJson(url, body);
-
-  if (!res.ok) {
-    const message = messageFromHttpPayload(res.status, json);
-    throw new AnalyseClientError(message, "http", { statusCode: res.status });
-  }
-
-  const parsed = safeParsePracticeGeneratePayload(json);
-  if (!parsed.success) {
-    throw new AnalyseClientError(
-      "API response did not match the expected practice generate shape. The server may need a fix.",
-      "response_shape",
-      { zodError: parsed.error, statusCode: res.status },
-    );
-  }
-
-  return parsed.data.items;
-}
-
-/**
- * POST /practice/evaluate — score one answer for a generated item (Phase 2).
- */
-export async function postPracticeEvaluate(payload: {
-  sentenceBreakdown: SentenceBreakdown;
-  practiceItem: PracticeItem;
-  userAnswer: string;
-}): Promise<PracticeResult> {
-  const base = guardApiBase();
-  const url = buildPracticeEvaluateUrl(base);
   const body = await withOptionalStudentContext({
-    sentenceBreakdown: payload.sentenceBreakdown,
-    practiceItem: payload.practiceItem,
-    userAnswer: payload.userAnswer.trim(),
+    gaps: payload.gaps,
   });
   const { res, json } = await postJson(url, body);
 
@@ -408,16 +403,47 @@ export async function postPracticeEvaluate(payload: {
     throw new AnalyseClientError(message, "http", { statusCode: res.status });
   }
 
-  const parsed = safeParsePracticeEvaluatePayload(json);
+  const parsed = safeParsePracticeGenerateItems(json);
   if (!parsed.success) {
     throw new AnalyseClientError(
-      "API response did not match the expected practice evaluate shape. The server may need a fix.",
+      "API response did not match the expected practice item list.",
       "response_shape",
       { zodError: parsed.error, statusCode: res.status },
     );
   }
 
-  return parsed.data.result;
+  return parsed.data;
+}
+
+/**
+ * POST /practice/submit — batch grading + SRS intervals (Phase 2.1).
+ */
+export async function postPracticeSubmit(submission: SessionSubmission): Promise<SessionResult> {
+  const base = guardApiBase();
+  const url = buildPracticeSubmitUrl(base);
+  const body = await withOptionalStudentContext({
+    gaps: submission.gaps,
+    practiceItems: submission.practiceItems,
+    items: submission.items,
+    studentContext: submission.studentContext.trim(),
+  });
+  const { res, json } = await postJson(url, body);
+
+  if (!res.ok) {
+    const message = messageFromHttpPayload(res.status, json);
+    throw new AnalyseClientError(message, "http", { statusCode: res.status });
+  }
+
+  const parsed = safeParseSessionResult(json);
+  if (!parsed.success) {
+    throw new AnalyseClientError(
+      "API response did not match the expected session result shape.",
+      "response_shape",
+      { zodError: parsed.error, statusCode: res.status },
+    );
+  }
+
+  return parsed.data;
 }
 
 /**

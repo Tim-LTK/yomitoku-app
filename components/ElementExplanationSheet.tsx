@@ -1,5 +1,6 @@
 import { ActivityIndicator, InteractionManager, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
+import { PitchAccentBadge } from "@/components/PitchAccentBadge";
 import type { BreakdownElement } from "@/lib/types/breakdown";
 import type { ElementExplanation } from "@/lib/types/gaps";
 
@@ -16,6 +17,8 @@ export type ElementExplanationSheetProps = {
   flagError: string | null;
   gapSaved: boolean;
   onNavigateToNigate?: () => void;
+  /** JMdict pitch pattern (display-only). */
+  pitchAccent?: string | null;
 };
 
 export function ElementExplanationSheet({
@@ -31,6 +34,7 @@ export function ElementExplanationSheet({
   flagError,
   gapSaved,
   onNavigateToNigate,
+  pitchAccent,
 }: ElementExplanationSheetProps) {
   const headline = explanation?.headline ?? "";
   const detail = explanation?.detail ?? "";
@@ -88,6 +92,7 @@ export function ElementExplanationSheet({
                 {element.text}{" "}
                 <Text className="font-normal text-indigo-800">({element.reading})</Text>
               </Text>
+              {pitchAccent ? <PitchAccentBadge pitchAccent={pitchAccent} /> : null}
               <Text className="mt-1 text-xs text-indigo-900">{element.meaning}</Text>
             </View>
           ) : null}

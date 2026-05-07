@@ -6,6 +6,7 @@ import {
   BreakdownSentenceCard,
   type ExpandedElementKey,
 } from "@/components/breakdown/BreakdownSentenceCard";
+import { lookupJmdict } from "@/lib/api/jmdict";
 import { postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { appendKnowledgeGap, buildKnowledgeGap } from "@/lib/storage/gaps";
@@ -76,6 +77,7 @@ export function BreakdownDetailView({
   const [flagBusy, setFlagBusy] = useState(false);
   const [flagError, setFlagError] = useState<string | null>(null);
   const [gapSaved, setGapSaved] = useState(false);
+  const [pitchAccent, setPitchAccent] = useState<string | null>(null);
 
   const sentenceCount = payload?.breakdowns.length ?? 0;
 
@@ -98,6 +100,14 @@ export function BreakdownDetailView({
       const cached = explainCacheRef.current.get(cacheKey);
 
       setSheetOpen(true);
+      setPitchAccent(null);
+      void lookupJmdict(ctx.element.text)
+        .then((result) => {
+          if (result?.source === "jmdict" && result.entry?.pitchAccent) {
+            setPitchAccent(result.entry.pitchAccent);
+          }
+        })
+        .catch(() => {});
       setSheetElement(ctx.element);
       setSentenceText(ctx.sourceSentence);
       setSentenceOrdinal(ctx.sentenceIndex);
@@ -172,6 +182,7 @@ export function BreakdownDetailView({
     setExplanation(null);
     setSheetElement(null);
     setSentenceText(null);
+    setPitchAccent(null);
     setGapSaved(false);
     setFlagError(null);
   }, []);
@@ -256,6 +267,7 @@ export function BreakdownDetailView({
         flagError={flagError}
         gapSaved={gapSaved}
         onNavigateToNigate={onNavigateToNigate}
+        pitchAccent={pitchAccent}
       />
     </ScrollView>
   );

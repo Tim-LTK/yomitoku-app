@@ -57,7 +57,7 @@ export default function NigateListScreen() {
           return;
         }
         const ids = due.map((g) => g.id).join(",");
-        router.push({ pathname: "/practice/nigate", params: { ids } });
+        router.push({ pathname: "/practice/[id]", params: { id: "drill", ids } });
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : "苦手リストを読み込めませんでした。ネットワークを確認してください。";

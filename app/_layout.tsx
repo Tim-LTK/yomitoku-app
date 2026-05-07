@@ -91,6 +91,14 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="practice/summary"
+            options={{
+              headerShown: true,
+              title: "まとめ",
+              headerBackTitle: "戻る",
+            }}
+          />
+          <Stack.Screen
             name="practice/nigate"
             options={{
               headerShown: true,

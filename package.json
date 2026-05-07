@@ -4,7 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "ios": "expo start --ios"
+    "ios": "expo run:ios",
+    "android": "expo run:android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

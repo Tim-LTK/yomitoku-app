@@ -20,6 +20,8 @@ export const flaggedItemSchema = z.object({
   briefExplanation: z.string(),
   inContext: z.string(),
   highlightTier: highlightTierSchema,
+  /** JMdict-derived pitch pattern — display-only, optional. */
+  pitchAccent: z.string().nullable().optional(),
 });
 
 export type FlaggedItem = z.infer<typeof flaggedItemSchema>;
@@ -41,6 +43,7 @@ export function safeParseScanResult(
 
 export const askResponseSchema = z.object({
   answer: z.string(),
+  suggestedFlaggedItem: flaggedItemSchema.optional(),
 });
 
 export type AskResponse = z.infer<typeof askResponseSchema>;

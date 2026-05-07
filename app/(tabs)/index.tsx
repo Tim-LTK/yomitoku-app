@@ -23,6 +23,7 @@ import {
   loadBreakdown,
   type RecentBreakdownEntry,
 } from "@/lib/storage/breakdowns";
+import { upsertScanToRecentList } from "@/lib/storage/history";
 import { clearProfile } from "@/lib/storage/profile";
 
 export default function HomeScreen() {
@@ -66,6 +67,14 @@ export default function HomeScreen() {
       const routeId = createBreakdownRouteId();
       const result = await postScan({ text });
       storeScanResult(routeId, result);
+      void upsertScanToRecentList(result).catch((err: unknown) => {
+        const g = globalThis as { logger?: { error?: (msg: string, e?: unknown) => void } };
+        if (typeof g.logger?.error === "function") {
+          g.logger.error("upsertScanToRecentList failed", err);
+        } else {
+          console.error(err);
+        }
+      });
       router.push(`/scan/${routeId}`);
     } catch (err) {
       if (err instanceof AnalyseClientError) {

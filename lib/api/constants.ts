@@ -10,13 +10,13 @@ export const ONBOARD_ASSESS_PATH = "/onboard/assess" as const;
 
 export const EXTRACT_PATH = "/extract" as const;
 
-/** Phase 2: mint drills from a single `SentenceBreakdown`. */
+/** Phase 2.1 — mint session drills from `KnowledgeGap[]` (server composes session). */
 
 export const PRACTICE_GENERATE_PATH = "/practice/generate" as const;
 
-/** Phase 2: score one learner submission. */
+/** Phase 2.1 — session batch submit → graded results + SRS intervals. */
 
-export const PRACTICE_EVALUATE_PATH = "/practice/evaluate" as const;
+export const PRACTICE_SUBMIT_PATH = "/practice/submit" as const;
 
 /** Phase 1.5 — targeted tutor explanation for one `BreakdownElement`. */
 

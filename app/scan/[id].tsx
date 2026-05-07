@@ -12,9 +12,11 @@ import {
 } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
+import { PitchAccentBadge } from "@/components/PitchAccentBadge";
 import { postAsk, postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { getScanResult } from "@/lib/breakdown/routePayload";
+import { enrichFlaggedItems } from "@/lib/scan/enrichment";
 import { appendKnowledgeGap, buildKnowledgeGap } from "@/lib/storage/gaps";
 import { cloudSaveGap } from "@/lib/storage/supabaseGaps";
 import type { BreakdownElement } from "@/lib/types/breakdown";
@@ -36,6 +38,8 @@ export default function ScanDetailScreen() {
     () => !id || Boolean(id && getScanResult(id)),
   );
 
+  const jmdictEnrichGateRef = useRef<string>("");
+
   useEffect(() => {
     if (!id) {
       setPayload(undefined);
@@ -54,6 +58,30 @@ export default function ScanDetailScreen() {
     setHydrationDone(true);
   }, [id]);
 
+  useEffect(() => {
+    jmdictEnrichGateRef.current = "";
+  }, [id]);
+
+  useEffect(() => {
+    if (!hydrationDone || !id) {
+      return;
+    }
+    const result = getScanResult(id);
+    if (!result || result.flaggedItems.length === 0) {
+      return;
+    }
+    const gateKey = `${id}:${result.passage}:${result.flaggedItems.map((i) => i.id).join(",")}`;
+    if (jmdictEnrichGateRef.current === gateKey) {
+      return;
+    }
+    jmdictEnrichGateRef.current = gateKey;
+    enrichFlaggedItems(result.flaggedItems).then((enriched) => {
+      setPayload((prev) =>
+        prev && prev.passage === result.passage ? { ...prev, flaggedItems: enriched } : prev,
+      );
+    });
+  }, [hydrationDone, id]);
+
   const explainCacheRef = useRef(new Map<string, ElementExplanation>());
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -66,6 +94,7 @@ export default function ScanDetailScreen() {
   const [flagBusy, setFlagBusy] = useState(false);
   const [flagError, setFlagError] = useState<string | null>(null);
   const [gapSaved, setGapSaved] = useState(false);
+  const [sheetPitchAccent, setSheetPitchAccent] = useState<string | null>(null);
 
   const [questionText, setQuestionText] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
@@ -79,6 +108,7 @@ export default function ScanDetailScreen() {
       const cached = explainCacheRef.current.get(cacheKey);
 
       setSheetOpen(true);
+      setSheetPitchAccent(item.pitchAccent ?? null);
       setSheetElement(element);
       setPassagePreview(payload?.passage ?? null);
       setGapSaved(false);
@@ -149,6 +179,7 @@ export default function ScanDetailScreen() {
     setExplanation(null);
     setSheetElement(null);
     setPassagePreview(null);
+    setSheetPitchAccent(null);
     setGapSaved(false);
     setFlagError(null);
   }, []);
@@ -236,6 +267,7 @@ export default function ScanDetailScreen() {
                 {item.text}
               </Text>
               <Text className="mt-1 text-base text-neutral-600">{item.reading}</Text>
+              {item.pitchAccent ? <PitchAccentBadge pitchAccent={item.pitchAccent} /> : null}
               <View className="mt-3 flex-row flex-wrap gap-2">
                 <View className="rounded-full border border-neutral-300 bg-white px-2.5 py-1">
                   <Text className="text-xs font-semibold text-neutral-800">{item.jlptLevel}</Text>
@@ -331,6 +363,7 @@ export default function ScanDetailScreen() {
         flagError={flagError}
         gapSaved={gapSaved}
         onNavigateToNigate={onNavigateToNigate}
+        pitchAccent={sheetPitchAccent}
       />
     </KeyboardAvoidingView>
   );
