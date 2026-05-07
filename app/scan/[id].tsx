@@ -18,6 +18,7 @@ import { postAsk, postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { getScanResult } from "@/lib/breakdown/routePayload";
 import { enrichFlaggedItems } from "@/lib/scan/enrichment";
+import { upsertScanToRecentList } from "@/lib/storage/history";
 import { appendKnowledgeGap, buildKnowledgeGap } from "@/lib/storage/gaps";
 import { cloudSaveGap } from "@/lib/storage/supabaseGaps";
 import type { BreakdownElement } from "@/lib/types/breakdown";
@@ -40,6 +41,7 @@ export default function ScanDetailScreen() {
   );
 
   const jmdictEnrichGateRef = useRef<string>("");
+  const savedToHistoryRef = useRef<string>("");
 
   useEffect(() => {
     if (!id) {
@@ -82,6 +84,18 @@ export default function ScanDetailScreen() {
       );
     });
   }, [hydrationDone, id]);
+
+  useEffect(() => {
+    if (!payload || !id) {
+      return;
+    }
+    const gateKey = `${id}:${payload.passage}`;
+    if (savedToHistoryRef.current === gateKey) {
+      return;
+    }
+    savedToHistoryRef.current = gateKey;
+    void upsertScanToRecentList(payload).catch(() => {});
+  }, [payload, id]);
 
   const explainCacheRef = useRef(new Map<string, ElementExplanation>());
 
@@ -360,9 +374,11 @@ export default function ScanDetailScreen() {
     <KeyboardAvoidingView
       className="flex-1 bg-white"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
     >
       <ScrollView
-        className="flex-1 px-4 pb-10"
+        className="flex-1 px-4"
+        contentContainerStyle={{ paddingBottom: 120 }}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
