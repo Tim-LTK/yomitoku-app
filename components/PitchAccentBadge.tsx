@@ -1,6 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 
-type Props = { pitchAccent: string; reading: string };
+type Props = {
+  pitchAccent: string;
+  reading: string;
+};
 
 function segmentMorae(reading: string): string[] {
   // Small combining kana attach to the preceding mora (e.g. きゃ = 1 mora)
@@ -50,50 +53,54 @@ export function PitchAccentBadge({ pitchAccent, reading }: Props) {
   }
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.accentLabel}>アクセント</Text>
-      <View style={styles.moraRow}>
-        {morae.map((mora, i) => {
-          const isHigh = pitchAccent[i] === "H";
-          return (
-            <View key={`${i}-${mora}`} style={isHigh ? styles.moraHigh : styles.moraLow}>
-              <Text style={styles.moraText}>{mora}</Text>
-            </View>
-          );
-        })}
-      </View>
+    <View style={styles.outer}>
+      {morae.map((mora, i) => {
+        const isHigh = pitchAccent[i] === "H";
+        const hasDropAfter =
+          pitchAccent[i] === "H" && i < pitchAccent.length - 1 && pitchAccent[i + 1] === "L";
+
+        let cellStyle = styles.moraLow;
+        if (isHigh && hasDropAfter) {
+          cellStyle = styles.moraHighDrop;
+        } else if (isHigh) {
+          cellStyle = styles.moraHigh;
+        }
+
+        return (
+          <View key={`${i}-${mora}`} style={cellStyle}>
+            <Text style={styles.moraText}>{mora}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    marginTop: 6,
-    alignSelf: "flex-start",
-  },
-  accentLabel: {
-    fontSize: 9,
-    fontWeight: "600",
-    color: "#6366f1",
-    letterSpacing: 0.5,
-    marginBottom: 2,
-    textTransform: "uppercase",
-  },
-  moraRow: {
+  outer: {
     flexDirection: "row",
+    alignItems: "flex-start",
     flexWrap: "wrap",
+    marginTop: 4,
+    alignSelf: "flex-start",
   },
   moraHigh: {
     borderTopWidth: 2,
     borderTopColor: "#4338ca",
     paddingTop: 4,
-    paddingHorizontal: 1,
+    paddingHorizontal: 2,
+  },
+  moraHighDrop: {
+    borderTopWidth: 2,
+    borderTopColor: "#4338ca",
+    borderRightWidth: 2,
+    borderRightColor: "#4338ca",
+    paddingTop: 4,
+    paddingHorizontal: 2,
   },
   moraLow: {
-    borderTopWidth: 0,
-    borderTopColor: "#4338ca",
     paddingTop: 6,
-    paddingHorizontal: 1,
+    paddingHorizontal: 2,
   },
   moraText: {
     fontSize: 13,

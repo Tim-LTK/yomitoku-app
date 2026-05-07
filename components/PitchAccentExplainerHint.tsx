@@ -56,7 +56,9 @@ export function PitchAccentExplainerHint({ visible }: Props) {
 
   return (
     <View style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <Text style={{ fontSize: 11, color: "#6366f1" }}>線のある文字 = 高く読む</Text>
+      <Text style={{ fontSize: 11, color: "#6366f1" }}>
+        青い線のある文字 = 高く読む · 線が下がる = 音が下がる
+      </Text>
       <Pressable accessibilityRole="button" accessibilityLabel="ヒントを閉じる" onPress={dismissHint}>
         <Text style={{ fontSize: 11, color: "#a3a3a3" }}>✕</Text>
       </Pressable>

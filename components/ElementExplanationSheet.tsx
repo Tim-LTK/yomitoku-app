@@ -89,16 +89,15 @@ export function ElementExplanationSheet({
 
           {element ? (
             <View className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/80 px-3 py-3">
-              <Text className="text-sm font-semibold text-indigo-950">
-                {element.text}{" "}
-                <Text className="font-normal text-indigo-800">({element.reading})</Text>
-              </Text>
-              {pitchAccent ? (
+              <Text className="text-sm font-semibold text-indigo-950">{element.text}</Text>
+              {canShowPitchAccentVisual(pitchAccent, element.reading) && pitchAccent ? (
                 <>
                   <PitchAccentBadge pitchAccent={pitchAccent} reading={element.reading} />
-                  <PitchAccentExplainerHint visible={canShowPitchAccentVisual(pitchAccent, element.reading)} />
+                  <PitchAccentExplainerHint visible />
                 </>
-              ) : null}
+              ) : (
+                <Text className="mt-0.5 text-sm font-normal text-indigo-800">({element.reading})</Text>
+              )}
               <Text className="mt-1 text-xs text-indigo-900">{element.meaning}</Text>
             </View>
           ) : null}

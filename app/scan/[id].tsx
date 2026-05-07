@@ -275,8 +275,7 @@ export default function ScanDetailScreen() {
               <Text className="text-2xl font-semibold leading-snug text-neutral-900">
                 {item.text}
               </Text>
-              <Text className="mt-1 text-base text-neutral-600">{item.reading}</Text>
-              {item.pitchAccent ? (
+              {canShowPitchAccentVisual(item.pitchAccent, item.reading) && item.pitchAccent ? (
                 <>
                   <PitchAccentBadge pitchAccent={item.pitchAccent} reading={item.reading} />
                   <PitchAccentExplainerHint
@@ -285,7 +284,9 @@ export default function ScanDetailScreen() {
                     }
                   />
                 </>
-              ) : null}
+              ) : (
+                <Text className="mt-1 text-base text-neutral-600">{item.reading}</Text>
+              )}
               <View className="mt-3 flex-row flex-wrap gap-2">
                 <View className="rounded-full border border-neutral-300 bg-white px-2.5 py-1">
                   <Text className="text-xs font-semibold text-neutral-800">{item.jlptLevel}</Text>
