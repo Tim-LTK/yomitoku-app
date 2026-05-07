@@ -51,18 +51,7 @@ export function PitchAccentBadge({ pitchAccent, reading }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text
-        style={{
-          fontSize: 9,
-          fontWeight: "600",
-          color: "#6366f1",
-          letterSpacing: 0.5,
-          marginBottom: 2,
-          textTransform: "uppercase",
-        }}
-      >
-        アクセント
-      </Text>
+      <Text style={styles.accentLabel}>アクセント</Text>
       <View style={styles.moraRow}>
         {morae.map((mora, i) => {
           const isHigh = pitchAccent[i] === "H";
@@ -81,6 +70,14 @@ const styles = StyleSheet.create({
   wrap: {
     marginTop: 6,
     alignSelf: "flex-start",
+  },
+  accentLabel: {
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#6366f1",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    textTransform: "uppercase",
   },
   moraRow: {
     flexDirection: "row",
