@@ -267,7 +267,7 @@ export default function ScanDetailScreen() {
                 {item.text}
               </Text>
               <Text className="mt-1 text-base text-neutral-600">{item.reading}</Text>
-              {item.pitchAccent ? <PitchAccentBadge pitchAccent={item.pitchAccent} /> : null}
+              {item.pitchAccent ? <PitchAccentBadge pitchAccent={item.pitchAccent} reading={item.reading} /> : null}
               <View className="mt-3 flex-row flex-wrap gap-2">
                 <View className="rounded-full border border-neutral-300 bg-white px-2.5 py-1">
                   <Text className="text-xs font-semibold text-neutral-800">{item.jlptLevel}</Text>

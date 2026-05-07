@@ -92,7 +92,7 @@ export function ElementExplanationSheet({
                 {element.text}{" "}
                 <Text className="font-normal text-indigo-800">({element.reading})</Text>
               </Text>
-              {pitchAccent ? <PitchAccentBadge pitchAccent={pitchAccent} /> : null}
+              {pitchAccent ? <PitchAccentBadge pitchAccent={pitchAccent} reading={element.reading} /> : null}
               <Text className="mt-1 text-xs text-indigo-900">{element.meaning}</Text>
             </View>
           ) : null}
