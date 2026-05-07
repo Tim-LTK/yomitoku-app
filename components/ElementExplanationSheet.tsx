@@ -1,6 +1,7 @@
 import { ActivityIndicator, InteractionManager, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
-import { PitchAccentBadge } from "@/components/PitchAccentBadge";
+import { PitchAccentBadge, canShowPitchAccentVisual } from "@/components/PitchAccentBadge";
+import { PitchAccentExplainerHint } from "@/components/PitchAccentExplainerHint";
 import type { BreakdownElement } from "@/lib/types/breakdown";
 import type { ElementExplanation } from "@/lib/types/gaps";
 
@@ -92,7 +93,12 @@ export function ElementExplanationSheet({
                 {element.text}{" "}
                 <Text className="font-normal text-indigo-800">({element.reading})</Text>
               </Text>
-              {pitchAccent ? <PitchAccentBadge pitchAccent={pitchAccent} reading={element.reading} /> : null}
+              {pitchAccent ? (
+                <>
+                  <PitchAccentBadge pitchAccent={pitchAccent} reading={element.reading} />
+                  <PitchAccentExplainerHint visible={canShowPitchAccentVisual(pitchAccent, element.reading)} />
+                </>
+              ) : null}
               <Text className="mt-1 text-xs text-indigo-900">{element.meaning}</Text>
             </View>
           ) : null}

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,7 +12,8 @@ import {
 } from "react-native";
 
 import { ElementExplanationSheet } from "@/components/ElementExplanationSheet";
-import { PitchAccentBadge } from "@/components/PitchAccentBadge";
+import { PitchAccentBadge, canShowPitchAccentVisual } from "@/components/PitchAccentBadge";
+import { PitchAccentExplainerHint } from "@/components/PitchAccentExplainerHint";
 import { postAsk, postExplain } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { getScanResult } from "@/lib/breakdown/routePayload";
@@ -219,6 +220,14 @@ export default function ScanDetailScreen() {
   const trimmedQuestion = questionText.trim();
   const askDisabled = trimmedQuestion.length === 0 || askLoading || !payload;
 
+  const firstFlaggedItemPitchHintIndex = useMemo(() => {
+    const items = payload?.flaggedItems;
+    if (!items?.length) {
+      return -1;
+    }
+    return items.findIndex((item) => canShowPitchAccentVisual(item.pitchAccent ?? null, item.reading));
+  }, [payload?.flaggedItems]);
+
   const content =
     !id ? (
       <View className="px-4 py-8">
@@ -256,7 +265,7 @@ export default function ScanDetailScreen() {
           注目ポイント
         </Text>
         <View className="mt-2 gap-3">
-          {payload.flaggedItems.map((item) => (
+          {payload.flaggedItems.map((item, index) => (
             <Pressable
               key={item.id}
               accessibilityRole="button"
@@ -267,7 +276,16 @@ export default function ScanDetailScreen() {
                 {item.text}
               </Text>
               <Text className="mt-1 text-base text-neutral-600">{item.reading}</Text>
-              {item.pitchAccent ? <PitchAccentBadge pitchAccent={item.pitchAccent} reading={item.reading} /> : null}
+              {item.pitchAccent ? (
+                <>
+                  <PitchAccentBadge pitchAccent={item.pitchAccent} reading={item.reading} />
+                  <PitchAccentExplainerHint
+                    visible={
+                      firstFlaggedItemPitchHintIndex >= 0 && index === firstFlaggedItemPitchHintIndex
+                    }
+                  />
+                </>
+              ) : null}
               <View className="mt-3 flex-row flex-wrap gap-2">
                 <View className="rounded-full border border-neutral-300 bg-white px-2.5 py-1">
                   <Text className="text-xs font-semibold text-neutral-800">{item.jlptLevel}</Text>

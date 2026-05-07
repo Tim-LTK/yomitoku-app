@@ -35,6 +35,14 @@ function segmentMorae(reading: string): string[] {
   return morae;
 }
 
+/** True when PitchAccentBadge will render morae + overlines (same length gate as the badge). */
+export function canShowPitchAccentVisual(pitchAccent: string | null | undefined, reading: string): boolean {
+  if (!pitchAccent) {
+    return false;
+  }
+  return segmentMorae(reading).length === pitchAccent.length;
+}
+
 export function PitchAccentBadge({ pitchAccent, reading }: Props) {
   const morae = segmentMorae(reading);
   if (morae.length !== pitchAccent.length) {
@@ -42,32 +50,53 @@ export function PitchAccentBadge({ pitchAccent, reading }: Props) {
   }
 
   return (
-    <View style={styles.row}>
-      {morae.map((mora, i) => {
-        const isHigh = pitchAccent[i] === "H";
-        return (
-          <View key={`${i}-${mora}`} style={isHigh ? styles.moraHigh : styles.moraLow}>
-            <Text style={styles.moraText}>{mora}</Text>
-          </View>
-        );
-      })}
+    <View style={styles.wrap}>
+      <Text
+        style={{
+          fontSize: 9,
+          fontWeight: "600",
+          color: "#6366f1",
+          letterSpacing: 0.5,
+          marginBottom: 2,
+          textTransform: "uppercase",
+        }}
+      >
+        アクセント
+      </Text>
+      <View style={styles.moraRow}>
+        {morae.map((mora, i) => {
+          const isHigh = pitchAccent[i] === "H";
+          return (
+            <View key={`${i}-${mora}`} style={isHigh ? styles.moraHigh : styles.moraLow}>
+              <Text style={styles.moraText}>{mora}</Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  wrap: {
     marginTop: 6,
     alignSelf: "flex-start",
+  },
+  moraRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   moraHigh: {
     borderTopWidth: 2,
     borderTopColor: "#4338ca",
+    paddingTop: 4,
+    paddingHorizontal: 1,
   },
   moraLow: {
-    paddingTop: 2,
+    borderTopWidth: 0,
+    borderTopColor: "#4338ca",
+    paddingTop: 6,
+    paddingHorizontal: 1,
   },
   moraText: {
     fontSize: 13,
