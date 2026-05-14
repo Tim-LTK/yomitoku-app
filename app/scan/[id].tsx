@@ -94,7 +94,7 @@ export default function ScanDetailScreen() {
       return;
     }
     savedToHistoryRef.current = gateKey;
-    void upsertScanToRecentList(payload).catch(() => {});
+    void upsertScanToRecentList(payload, id).catch(() => {});
   }, [payload, id]);
 
   const explainCacheRef = useRef(new Map<string, ElementExplanation>());
@@ -104,6 +104,7 @@ export default function ScanDetailScreen() {
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<ElementExplanation | null>(null);
   const [sheetElement, setSheetElement] = useState<BreakdownElement | null>(null);
+  const [sheetItemInContext, setSheetItemInContext] = useState<string>("");
   const [passagePreview, setPassagePreview] = useState<string | null>(null);
 
   const [flagBusy, setFlagBusy] = useState(false);
@@ -125,6 +126,7 @@ export default function ScanDetailScreen() {
       setSheetOpen(true);
       setSheetPitchAccent(item.pitchAccent ?? null);
       setSheetElement(element);
+      setSheetItemInContext(item.inContext ?? "");
       setPassagePreview(payload?.passage ?? null);
       setGapSaved(false);
       setFlagError(null);
@@ -171,7 +173,7 @@ export default function ScanDetailScreen() {
       const flagged = buildKnowledgeGap({
         breakdownRouteId: id,
         sentenceIndex: 0,
-        sourceSentence: payload.passage,
+        sourceSentence: sheetItemInContext || payload.passage,
         element: sheetElement,
         explanationSnapshot: explanation,
       });
@@ -185,7 +187,7 @@ export default function ScanDetailScreen() {
     } finally {
       setFlagBusy(false);
     }
-  }, [explanation, id, payload, sheetElement]);
+  }, [explanation, id, payload, sheetElement, sheetItemInContext]);
 
   const dismissSheet = useCallback(() => {
     setSheetOpen(false);
@@ -193,6 +195,7 @@ export default function ScanDetailScreen() {
     setSheetError(null);
     setExplanation(null);
     setSheetElement(null);
+    setSheetItemInContext("");
     setPassagePreview(null);
     setSheetPitchAccent(null);
     setGapSaved(false);
@@ -273,7 +276,9 @@ export default function ScanDetailScreen() {
       </View>
     ) : (
       <>
-        <Text className="text-base leading-relaxed text-neutral-900">{payload.passage}</Text>
+        <Text selectable className="text-base leading-relaxed text-neutral-900">
+          {payload.passage}
+        </Text>
 
         <Text className="mt-8 text-xs font-semibold uppercase tracking-wide text-neutral-400">
           注目ポイント

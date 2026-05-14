@@ -43,7 +43,7 @@ export function safeParseScanResult(
 
 export const askResponseSchema = z.object({
   answer: z.string(),
-  suggestedFlaggedItem: flaggedItemSchema.optional(),
+  suggestedFlaggedItem: flaggedItemSchema.nullish(),
 });
 
 export type AskResponse = z.infer<typeof askResponseSchema>;

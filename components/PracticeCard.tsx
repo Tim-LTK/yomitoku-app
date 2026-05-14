@@ -8,6 +8,7 @@ import type { PracticeItem } from "@/lib/types/practice";
 type Props = {
   item: PracticeItem;
   grammarLabel: string;
+  elementText?: string;
   answer: string | undefined;
   onChangeAnswer: (itemId: string, value: string) => void;
 };
@@ -33,7 +34,13 @@ export function grammarLabelFromRole(role: GrammarRole | string): string {
   return formatGrammarRoleLabel(role as GrammarRole);
 }
 
-export const PracticeCard = memo(function PracticeCard({ item, grammarLabel, answer, onChangeAnswer }: Props) {
+export const PracticeCard = memo(function PracticeCard({
+  item,
+  grammarLabel,
+  elementText,
+  answer,
+  onChangeAnswer,
+}: Props) {
   const value = answer ?? "";
   const typed = ["fill_blank", "conjugate", "translate"].includes(item.questionType);
   const mc = item.questionType === "application_mc" || item.questionType === "nuance_choice";
@@ -50,6 +57,9 @@ export const PracticeCard = memo(function PracticeCard({ item, grammarLabel, ans
       <Text className="pr-20 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
         {grammarLabel}
       </Text>
+      {elementText ? (
+        <Text className="mt-0.5 pr-20 text-sm font-semibold text-neutral-700">{elementText}</Text>
+      ) : null}
       <Text className="mt-2 text-base font-semibold leading-snug text-neutral-900">{item.prompt}</Text>
 
       {typed ? (

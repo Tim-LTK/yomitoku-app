@@ -55,6 +55,26 @@ async function upsertRecentBreakdownEntry(id: string, payload: AnalyseResult): P
   await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(list));
 }
 
+export async function upsertRecentScanEntry(id: string, preview: string): Promise<void> {
+  const analysedAt = new Date().toISOString();
+  const raw = await AsyncStorage.getItem(RECENT_KEY);
+  let list: RecentBreakdownEntry[] = [];
+  if (raw?.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        list = parsed.filter(isRecentEntry);
+      }
+    } catch {
+      list = [];
+    }
+  }
+  list = list.filter((e) => e.id !== id);
+  list.unshift({ id, preview: preview.slice(0, 30), analysedAt });
+  list = list.slice(0, RECENT_MAX);
+  await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(list));
+}
+
 export async function listRecentBreakdowns(): Promise<RecentBreakdownEntry[]> {
   const raw = await AsyncStorage.getItem(RECENT_KEY);
   if (!raw?.trim()) {

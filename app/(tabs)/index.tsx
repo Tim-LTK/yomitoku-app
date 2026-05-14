@@ -17,7 +17,7 @@ import { UploadZone } from "@/components/UploadZone";
 import { postScan } from "@/lib/api/client";
 import { AnalyseClientError } from "@/lib/api/errors";
 import { createBreakdownRouteId } from "@/lib/breakdown/routeId";
-import { storeAnalyseResult, storeScanResult } from "@/lib/breakdown/routePayload";
+import { getScanResult, storeAnalyseResult, storeScanResult } from "@/lib/breakdown/routePayload";
 import {
   listRecentBreakdowns,
   loadBreakdown,
@@ -47,6 +47,11 @@ export default function HomeScreen() {
   const isSubmitDisabled = useMemo(() => trimmedInput.length === 0 || isSubmitting, [trimmedInput, isSubmitting]);
 
   const handleOpenRecent = useCallback(async (entry: RecentBreakdownEntry) => {
+    const scanResult = getScanResult(entry.id);
+    if (scanResult) {
+      router.push(`/scan/${entry.id}`);
+      return;
+    }
     const payload = await loadBreakdown(entry.id);
     if (!payload) {
       return;
@@ -67,7 +72,7 @@ export default function HomeScreen() {
       const routeId = createBreakdownRouteId();
       const result = await postScan({ text });
       storeScanResult(routeId, result);
-      void upsertScanToRecentList(result).catch((err: unknown) => {
+      void upsertScanToRecentList(result, routeId).catch((err: unknown) => {
         const g = globalThis as { logger?: { error?: (msg: string, e?: unknown) => void } };
         if (typeof g.logger?.error === "function") {
           g.logger.error("upsertScanToRecentList failed", err);

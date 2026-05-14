@@ -3,7 +3,9 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -69,6 +71,13 @@ export default function OnboardingAssessmentScreen() {
     setTimeout(scroll, 100);
     setTimeout(scroll, 350);
   }, []);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () => {
+      scheduleScrollToEnd();
+    });
+    return () => show.remove();
+  }, [scheduleScrollToEnd]);
 
   useEffect(() => {
     if (seededRef.current || draft.level === null || nativeForApi.length === 0) {
@@ -204,114 +213,111 @@ export default function OnboardingAssessmentScreen() {
 
   const minimalDevAssessmentUi = __DEV__ && draft.devAssessmentAutoFillRequested && !missingDeps;
 
-  const keyboardVerticalOffset = insets.top + 44;
-
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior="padding"
-      keyboardVerticalOffset={keyboardVerticalOffset}
-      className="flex-1 bg-neutral-50"
-    >
-      <View style={{ flex: 1, paddingTop: insets.top }} className="bg-neutral-50">
-        <View className="border-b border-neutral-200 px-6 pb-4 pt-2">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="戻る"
-            hitSlop={12}
-            disabled={busy}
-            onPress={() => router.back()}
-            className={`mb-3 flex-row items-center gap-1 self-start py-2 ${busy ? "opacity-40" : "active:opacity-80"}`}
-          >
-            <Ionicons name="chevron-back" size={22} color="#4f46e5" />
-            <View className="-ml-0.5">
-              <Text className="text-base font-semibold text-indigo-700">戻る</Text>
-              <Text className="mt-0.5 text-[11px] text-neutral-500">Back</Text>
-            </View>
-          </Pressable>
-          <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400">ステップ 3 / 4</Text>
-          <Text className="mt-1 text-xl font-semibold text-neutral-900">プレースメント</Text>
-          <Text className="mt-2 text-[11px] text-neutral-500">回答のみをサーバーに送り、モデル評価に利用します。</Text>
+    <View style={{ flex: 1, paddingTop: insets.top }} className="bg-neutral-50">
+      <View
+        className="flex-row items-center border-b border-neutral-200 bg-neutral-50 px-4"
+        style={{ height: 56 }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          hitSlop={12}
+          disabled={busy}
+          onPress={() => router.back()}
+          className={`flex-row items-center gap-1 ${busy ? "opacity-40" : "active:opacity-80"}`}
+        >
+          <Ionicons name="chevron-back" size={20} color="#4f46e5" />
+          <Text className="text-base font-semibold text-indigo-700">戻る</Text>
+        </Pressable>
+        <Text className="flex-1 text-center text-base font-semibold text-neutral-900">プレースメント</Text>
+        <View className="rounded-full bg-neutral-100 px-2.5 py-1">
+          <Text className="text-xs font-semibold text-neutral-500">3 / 4</Text>
         </View>
+      </View>
 
-        {missingDeps ? (
-          <View style={{ flex: 1 }} className="items-center px-10 pt-24">
-            <Text className="text-center text-sm text-neutral-600">入力が足りません。</Text>
-            <Pressable
-              className="mt-6 rounded-xl bg-neutral-900 px-6 py-3"
-              accessibilityRole="button"
-              onPress={() => router.replace("/onboarding")}
-            >
-              <Text className="text-sm font-semibold text-white">やり直す</Text>
-            </Pressable>
-          </View>
-        ) : minimalDevAssessmentUi ? (
-          <View style={{ flex: 1 }} className="items-center justify-center gap-6 px-8 pb-24">
+      {missingDeps ? (
+        <View style={{ flex: 1 }} className="items-center px-10 pt-24">
+          <Text className="text-center text-sm text-neutral-600">入力が足りません。</Text>
+          <Pressable
+            className="mt-6 rounded-xl bg-neutral-900 px-6 py-3"
+            accessibilityRole="button"
+            onPress={() => router.replace("/onboarding")}
+          >
+            <Text className="text-sm font-semibold text-white">やり直す</Text>
+          </Pressable>
+        </View>
+      ) : minimalDevAssessmentUi ? (
+        <View style={{ flex: 1 }} className="items-center justify-center gap-6 px-8 pb-24">
+          {error ? (
+            <>
+              <Text className="text-center text-sm text-red-900">{error}</Text>
+              <Pressable
+                accessibilityRole="button"
+                className="rounded-xl bg-neutral-900 px-6 py-3"
+                onPress={() => router.replace("/onboarding/level")}
+              >
+                <Text className="text-sm font-semibold text-white">前に戻る</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <ActivityIndicator accessibilityLabel="Dev自動プレースメント中" />
+              <Text className="text-center text-sm text-neutral-600">Dev自動プレースメント中…</Text>
+            </>
+          )}
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={scrollViewRef}
+            keyboardShouldPersistTaps="handled"
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
+          >
+            {messages.map((m, i) =>
+              m.role === "assistant" ? (
+                <View key={`assistant-${String(i)}`} className="mb-6 max-w-[95%] self-start">
+                  <Text className="text-base leading-relaxed text-neutral-900">{m.jp}</Text>
+                  {m.en && showAssistantEn ? (
+                    <Text className="mt-2 text-sm leading-relaxed text-neutral-500">{m.en}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View key={`user-${String(i)}`} className="mb-6 max-w-[95%] self-end rounded-2xl bg-indigo-100 px-4 py-3">
+                  <Text className="text-base leading-relaxed text-indigo-950">{m.jp}</Text>
+                </View>
+              ),
+            )}
+
+            {busy ? (
+              <View className="mt-2 flex-row gap-4 self-start">
+                <ActivityIndicator accessibilityLabel="プロフィール作成中" />
+                <View className="flex-shrink">
+                  <Text className="text-sm leading-relaxed text-neutral-900">プロフィールを作成中...</Text>
+                  <Text className="mt-1 text-xs leading-relaxed text-neutral-400">Creating your profile...</Text>
+                </View>
+              </View>
+            ) : null}
+
             {error ? (
-              <>
-                <Text className="text-center text-sm text-red-900">{error}</Text>
+              <View className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <Text className="text-sm text-red-900">{error}</Text>
                 <Pressable
                   accessibilityRole="button"
-                  className="rounded-xl bg-neutral-900 px-6 py-3"
+                  className="mt-4 rounded-lg bg-neutral-900 py-3"
                   onPress={() => router.replace("/onboarding/level")}
                 >
-                  <Text className="text-sm font-semibold text-white">前に戻る</Text>
+                  <Text className="text-center text-sm font-semibold text-white">前に戻る</Text>
                 </Pressable>
-              </>
-            ) : (
-              <>
-                <ActivityIndicator accessibilityLabel="Dev自動プレースメント中" />
-                <Text className="text-center text-sm text-neutral-600">Dev自動プレースメント中…</Text>
-              </>
-            )}
-          </View>
-        ) : (
-          <View style={{ flex: 1 }}>
-            <ScrollView
-              ref={scrollViewRef}
-              keyboardShouldPersistTaps="handled"
-              style={{ flex: 1 }}
-              contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
-            >
-              {messages.map((m, i) =>
-                m.role === "assistant" ? (
-                  <View key={`assistant-${String(i)}`} className="mb-6 max-w-[95%] self-start">
-                    <Text className="text-base leading-relaxed text-neutral-900">{m.jp}</Text>
-                    {m.en && showAssistantEn ? (
-                      <Text className="mt-2 text-sm leading-relaxed text-neutral-500">{m.en}</Text>
-                    ) : null}
-                  </View>
-                ) : (
-                  <View key={`user-${String(i)}`} className="mb-6 max-w-[95%] self-end rounded-2xl bg-indigo-100 px-4 py-3">
-                    <Text className="text-base leading-relaxed text-indigo-950">{m.jp}</Text>
-                  </View>
-                ),
-              )}
+              </View>
+            ) : null}
+          </ScrollView>
 
-              {busy ? (
-                <View className="mt-2 flex-row gap-4 self-start">
-                  <ActivityIndicator accessibilityLabel="プロフィール作成中" />
-                  <View className="flex-shrink">
-                    <Text className="text-sm leading-relaxed text-neutral-900">プロフィールを作成中...</Text>
-                    <Text className="mt-1 text-xs leading-relaxed text-neutral-400">Creating your profile...</Text>
-                  </View>
-                </View>
-              ) : null}
-
-              {error ? (
-                <View className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                  <Text className="text-sm text-red-900">{error}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    className="mt-4 rounded-lg bg-neutral-900 py-3"
-                    onPress={() => router.replace("/onboarding/level")}
-                  >
-                    <Text className="text-center text-sm font-semibold text-white">前に戻る</Text>
-                  </Pressable>
-                </View>
-              ) : null}
-            </ScrollView>
-
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={0}
+          >
             {!busy ? (
               <View
                 className="border-t border-neutral-200 bg-white px-4 pt-3"
@@ -349,9 +355,9 @@ export default function OnboardingAssessmentScreen() {
                 ) : null}
               </View>
             ) : null}
-          </View>
-        )}
-      </View>
-    </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
+      )}
+    </View>
   );
 }

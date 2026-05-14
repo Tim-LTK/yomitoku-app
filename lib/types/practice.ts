@@ -40,7 +40,7 @@ export const practiceItemSchema = z.object({
   questionType: questionTypeSchema,
   prompt: z.string().min(1),
   hint: z.string().nullable().optional(),
-  options: z.array(z.string()).optional(),
+  options: z.array(z.string()).nullable().optional(),
   canonicalAnswer: z.string().nullable().optional(),
 });
 

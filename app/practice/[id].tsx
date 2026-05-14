@@ -206,6 +206,7 @@ export default function PracticeSessionScreen() {
     <KeyboardAvoidingView
       className="flex-1 bg-white"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
     >
       <ScrollView
         className="flex-1"
@@ -261,6 +262,7 @@ export default function PracticeSessionScreen() {
                   key={item.itemId}
                   item={item}
                   grammarLabel={grammarLabel}
+                  elementText={gap?.element.text}
                   answer={answers[item.itemId]}
                   onChangeAnswer={onChangeAnswer}
                 />

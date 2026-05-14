@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { upsertRecentScanEntry } from "@/lib/storage/breakdowns";
 import type { ScanResult } from "@/lib/types/scan";
 
 const RECENT_SCANS_KEY = "yomitoku:recentScans:v1";
@@ -37,7 +38,10 @@ function isRecentScan(x: unknown): x is RecentScan {
   );
 }
 
-export async function upsertScanToRecentList(scanResult: ScanResult): Promise<void> {
+export async function upsertScanToRecentList(
+  scanResult: ScanResult,
+  routeId: string,
+): Promise<void> {
   const passageDisplay = passagePreviewFromScan(scanResult);
   const scannedAt = new Date().toISOString();
 
@@ -66,4 +70,5 @@ export async function upsertScanToRecentList(scanResult: ScanResult): Promise<vo
 
   list = list.slice(0, RECENT_SCANS_MAX);
   await AsyncStorage.setItem(RECENT_SCANS_KEY, JSON.stringify(list));
+  await upsertRecentScanEntry(routeId, passageDisplay);
 }
